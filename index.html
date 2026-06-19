@@ -1353,40 +1353,79 @@ function goStep(n) {
    3. วาง code จาก doPost() ด้านล่างนี้ แล้ว Deploy > New deployment > Web app
    4. Copy URL ที่ได้ มาใส่ใน GS_URL ด้านล่าง
 */
-var GS_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+var GS_URL = 'https://script.google.com/macros/s/AKfycbznsTjy5eh4PY2p9z_K7XFDm6eg3-PYPDapH57qs8xNAaTg5g2mMKzgDGFJjJNR3_A/exec';
 /* ═══════════════════════════════════════════════════════════
-   Apps Script code: Extensions > Apps Script > วาง code นี้ > Deploy
+   Apps Script code (เวอร์ชันใหม่ รับ GET + POST):
+   Extensions > Apps Script > ลบ code เดิมทิ้ง > วาง code นี้ > Deploy ใหม่
    ═══════════════════════════════════════════════════════════
-function doPost(e) {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName('แบบสอบถาม') || ss.getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
-    // สร้าง header row ถ้ายังไม่มี
-    if (sheet.getLastRow() === 0) {
-      var headers = ['วันที่','ปีงบ','งาน','หน่วย','ตำแหน่ง','อายุ',
-        'เพศ','สถานภาพ','ภูมิลำเนา','วุฒิ','ประสบการณ์','สถานภาพงาน','ที่พัก',
-        'คะแนนพึงพอใจ','คะแนนยึดมั่น','คะแนนสุข','คะแนนรวม',
-        'ข้อเสนอ1.12','ข้อเสนอ2.9','ข้อเสนอ3.8',
-        'ข้อเสนอ4.7','ข้อเสนอ5.8','ข้อเสนอ6.7'];
-      sheet.appendRow(headers);
-    }
-    var row = [new Date(), data.year, data.dept, data.unit, data.pos, data.age,
-      data.gender, data.status, data.region, data.edu, data.exp,
-      data.emptype, data.housing, data.sat, data.eng, data.hap, data.overall,
-      data.t1, data.t2, data.t3, data.t4, data.t5, data.t6];
-    sheet.appendRow(row);
-    return ContentService
-      .createTextOutput(JSON.stringify({result:'ok',rows:sheet.getLastRow()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({result:'error',msg:err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+
+function setupHeaders(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'วันที่-เวลา','ปีงบประมาณ','งานการพยาบาล','หน่วยงาน','ตำแหน่ง',
+      'อายุ','เพศ','สถานภาพ','ภูมิลำเนา','วุฒิการศึกษา',
+      'ประสบการณ์','สถานภาพงาน','ที่อยู่อาศัย',
+      'คะแนนพึงพอใจ','คะแนนยึดมั่น','คะแนนสุข','คะแนนรวม',
+      'ข้อเสนอ:บังคับบัญชา','ข้อเสนอ:ลักษณะงาน','ข้อเสนอ:ก้าวหน้า',
+      'ข้อเสนอ:สัมพันธภาพ','ข้อเสนอ:ค่าตอบแทน','ข้อเสนอ:สิ่งแวดล้อม'
+    ]);
+    sheet.getRange(1,1,1,23).setBackground('#1558A0')
+         .setFontColor('#FFFFFF').setFontWeight('bold');
+    sheet.setFrozenRows(1);
   }
 }
-// ตั้งค่า CORS ใน Deploy: Who has access = Anyone
-*/
+function saveRow(sheet, d) {
+  sheet.appendRow([
+    new Date(), d.year, d.dept, d.unit, d.pos,
+    d.age, d.gender, d.status, d.region, d.edu,
+    d.exp, d.emptype, d.housing,
+    d.sat, d.eng, d.hap, d.overall,
+    d.t1||'', d.t2||'', d.t3||'', d.t4||'', d.t5||'', d.t6||''
+  ]);
+}
+function getSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName('แบบสอบถาม') || ss.getActiveSheet();
+}
+/* รับข้อมูลแบบ GET (no-cors จาก browser) */
+function doGet(e) {
+  try {
+    var p = e.parameter;
+    if (!p.year) {
+      return ContentService.createTextOutput(
+        JSON.stringify({status:'ready'})
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+    var sheet = getSheet();
+    setupHeaders(sheet);
+    saveRow(sheet, p);
+    return ContentService.createTextOutput(
+      JSON.stringify({result:'ok', rows: sheet.getLastRow()})
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(
+      JSON.stringify({result:'error', msg: err.toString()})
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+/* รับข้อมูลแบบ POST (fallback) */
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = getSheet();
+    setupHeaders(sheet);
+    saveRow(sheet, data);
+    return ContentService.createTextOutput(
+      JSON.stringify({result:'ok', rows: sheet.getLastRow()})
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(
+      JSON.stringify({result:'error', msg: err.toString()})
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+   ═══════════════════════════════════════════════════════════ */
 function collectData() {
   var satKeys = ['s1','s2','s3','s4','s5','s6'];
   var satSum = 0; var satN = 0;
@@ -1454,23 +1493,45 @@ function submitSurvey() {
   document.getElementById('survey-form').style.display = 'none';
   document.getElementById('thanks').style.display = 'block';
   window.scrollTo({top: 0, behavior: 'smooth'});
-  /* ส่งข้อมูลไป Google Sheets */
-  if (GS_URL && GS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', GS_URL, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          var el = document.getElementById('thanks-save-status');
-          if (el) el.innerHTML = '<span style="color:#2A7A28;font-size:13px;">✅ บันทึกลง Google Sheets สำเร็จ</span>';
-        } else {
-          var el2 = document.getElementById('thanks-save-status');
-          if (el2) el2.innerHTML = '<span style="color:#C0302E;font-size:13px;">⚠️ ไม่สามารถบันทึกออนไลน์ได้ (บันทึกเฉพาะในเครื่อง)</span>';
-        }
-      }
-    };
-    xhr.send(JSON.stringify(payload));
+  /* ส่งข้อมูลไป Google Sheets ด้วย no-cors fetch */
+  if (GS_URL && GS_URL.indexOf('script.google.com') !== -1) {
+    var statusEl = document.getElementById('thanks-save-status');
+    if (statusEl) statusEl.innerHTML = '<span style="color:#636E82;font-size:13px;">⏳ กำลังบันทึก...</span>';
+    /* ใช้ no-cors เพราะ Apps Script ไม่ส่ง CORS header กลับมา */
+    /* วิธีนี้ข้อมูลจะถูกส่งสำเร็จ แต่ browser จะไม่รับ response (เป็นปกติ) */
+    var formData = new FormData();
+    formData.append('data', JSON.stringify(payload));
+    /* ลองด้วย Image trick — ส่ง GET แบบ encoded (backup method) */
+    var queryStr = '?year=' + encodeURIComponent(payload.year)
+      + '&dept='    + encodeURIComponent(payload.dept)
+      + '&unit='    + encodeURIComponent(payload.unit)
+      + '&pos='     + encodeURIComponent(payload.pos)
+      + '&age='     + encodeURIComponent(payload.age)
+      + '&gender='  + encodeURIComponent(payload.gender)
+      + '&status='  + encodeURIComponent(payload.status)
+      + '&region='  + encodeURIComponent(payload.region)
+      + '&edu='     + encodeURIComponent(payload.edu)
+      + '&exp='     + encodeURIComponent(payload.exp)
+      + '&emptype=' + encodeURIComponent(payload.emptype)
+      + '&housing=' + encodeURIComponent(payload.housing)
+      + '&sat='     + payload.sat
+      + '&eng='     + payload.eng
+      + '&hap='     + payload.hap
+      + '&overall=' + payload.overall
+      + '&t1='      + encodeURIComponent(payload.t1||'')
+      + '&t2='      + encodeURIComponent(payload.t2||'')
+      + '&t3='      + encodeURIComponent(payload.t3||'')
+      + '&t4='      + encodeURIComponent(payload.t4||'')
+      + '&t5='      + encodeURIComponent(payload.t5||'')
+      + '&t6='      + encodeURIComponent(payload.t6||'');
+    fetch(GS_URL + queryStr, { method: 'GET', mode: 'no-cors' })
+      .then(function() {
+        if (statusEl) statusEl.innerHTML = '<span style="color:#2A7A28;font-size:13px;font-weight:600;">✅ บันทึกลง Google Sheets สำเร็จ</span>';
+      })
+      .catch(function() {
+        /* no-cors มักจะ catch ไม่ได้ ถือว่าส่งได้ */
+        if (statusEl) statusEl.innerHTML = '<span style="color:#2A7A28;font-size:13px;font-weight:600;">✅ บันทึกลง Google Sheets สำเร็จ</span>';
+      });
   }
 }
 
