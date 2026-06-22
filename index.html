@@ -522,9 +522,16 @@ tr:hover td { background: var(--g50); }
 /* =========================================================
    RESPONSIVE — TABLET (≤768px)
    ========================================================= */
+@media (max-width: 1024px) {
+  /* iPad / tablet landscape */
+  .page { max-width: 100%; }
+}
 @media (max-width: 768px) {
+  /* iPad portrait / large phone */
   .g2 { grid-template-columns: 1fr; }
   .fg3 { grid-template-columns: 1fr 1fr; }
+  .cw, .cwsm { height: 260px; }
+  #pct-cards { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* =========================================================
@@ -659,6 +666,13 @@ tr:hover td { background: var(--g50); }
   .pct-card .pct-lbl { order: 1; flex: 1; margin-bottom: 0; font-size: 14px; }
   .pct-ring { order: 0; margin: 0; width: 100px; height: 100px; flex-shrink: 0; }
   .pct-card .pct-desc { display: none; }
+  /* demographic donut charts — taller on mobile for legend space */
+  .cwsm { height: 240px; }
+  /* metrics consistent 3-col on phone */
+  .metrics { grid-template-columns: repeat(3, 1fr); }
+  /* year tabs scroll horizontally */
+  #year-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  #year-tabs::-webkit-scrollbar { display: none; }
 }
 </style>
 </head>
@@ -1215,8 +1229,12 @@ tr:hover td { background: var(--g50); }
         <button class="ytab active" id="demo-view-all" onclick="switchDemoView('all',this)">ภาพรวมฝ่าย</button>
         <button class="ytab" id="demo-view-dept" onclick="switchDemoView('dept',this)">แยกงานการพยาบาล</button>
       </div>
-      <span style="font-size:12px;color:var(--g400);margin-left:auto;" id="demo-note">ข้อมูลปีงบ 2569</span>
+      <button onclick="fetchLiveDemographic()" style="margin-left:auto;background:var(--blue-lt);border:1.5px solid var(--blue-md);color:var(--blue);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        รีเฟรช
+      </button>
     </div>
+    <div style="font-size:12px;color:var(--g400);margin-top:8px;" id="demo-note">ข้อมูลปีงบ 2569</div>
   </div>
 
   <!-- Dept selector (shown only in dept view) -->
@@ -1596,6 +1614,19 @@ function loadGSUrl() {
 }
 window.addEventListener('load', loadGSUrl);
 
+/* รองรับการหมุนจอ tablet/มือถือ — วาดกราฟใหม่ให้พอดีหน้าจอ */
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    /* Chart.js auto-resizes with responsive:true, but donut legend position needs re-render */
+    if (typeof DEMO_CI !== 'undefined' && DEMO_CI &&
+        document.getElementById('page-demographic').classList.contains('active')) {
+      renderDemographic();
+    }
+  }, 250);
+});
+
 /* ── 14. HISTORICAL DATA ── */
 var YEARS = [2562,2563,2564,2565,2566,2567,2568,2569];
 var YEAR_DATA = {
@@ -1967,11 +1998,12 @@ function makeDonut(canvasId, labels, data, colors) {
   if (demoCharts[canvasId]) { demoCharts[canvasId].destroy(); }
   var ctx = document.getElementById(canvasId);
   if (!ctx) return;
+  var legendPos = window.innerWidth < 600 ? 'bottom' : 'right';
   demoCharts[canvasId] = new Chart(ctx, {
     type:'doughnut',
     data:{labels:labels, datasets:[{data:data, backgroundColor:colors, borderWidth:2, borderColor:'#fff'}]},
     options:{responsive:true, maintainAspectRatio:false, cutout:'58%',
-      plugins:{legend:{position:'right', labels:{font:{size:10}, boxWidth:12, padding:6}},
+      plugins:{legend:{position:legendPos, labels:{font:{size:10}, boxWidth:12, padding:6}},
         tooltip:{callbacks:{label:function(c){
           var total=c.dataset.data.reduce(function(a,b){return a+b;},0);
           var pct=total?((c.parsed/total)*100).toFixed(1):0;
@@ -2038,16 +2070,96 @@ function renderDemographic() {
   }
 }
 
-function initDemographic() {
-  DEMO_CI = true;
-  /* Populate dept selector */
+function buildDeptSelector() {
   var sel = document.getElementById('demo-dept-select');
+  sel.innerHTML = '<option value="all">— ทุกงาน (ภาพรวม) —</option>';
   for (var d in DEMOGRAPHIC) {
     var opt = document.createElement('option');
     opt.value = d; opt.textContent = 'งาน' + d;
     sel.appendChild(opt);
   }
+}
+
+/* แปลงข้อมูลดิบจาก Google Sheets เป็นโครงสร้าง DEMOGRAPHIC */
+function aggregateFromRows(rows) {
+  /* rows = array ของ object {dept, age, gender, edu, exp, region, pos} */
+  var deptMap = {};
+  var ageIdx    = function(v){ if(/30/.test(v)&&/น้อย|≤|<=|ต่ำ/.test(v))return 0; if(/31/.test(v))return 1; if(/41/.test(v))return 2; if(/50/.test(v)&&/มากกว่า|>/.test(v))return 3; if(/30/.test(v))return 0; return -1; };
+  var genderIdx = function(v){ if(/ชาย/.test(v))return 0; if(/หญิง/.test(v))return 1; return 2; };
+  var eduIdx    = function(v){ if(/ตรี.*พยาบาล/.test(v))return 0; if(/ตรี/.test(v))return 1; if(/โท.*พยาบาล/.test(v))return 2; if(/โท/.test(v))return 3; if(/ผู้ช่วย|ปวส|ประกาศ/.test(v))return 4; return 5; };
+  var expIdx    = function(v){ if(/น้อยกว่า 1|<1/.test(v))return 0; if(/1.*2/.test(v)&&!/0/.test(v))return 1; if(/2.*5/.test(v))return 2; if(/5.*10/.test(v))return 3; if(/10.*20/.test(v))return 4; if(/20/.test(v))return 5; return -1; };
+  var regionIdx = function(v){ if(/กรุงเทพ/.test(v))return 0; if(/ปริมณฑล/.test(v))return 1; return 2; };
+  var posIdx    = function(v){ if(/หัวหน้าฝ่าย/.test(v))return 0; if(/หัวหน้างาน/.test(v))return 1; if(/ผู้ตรวจการ/.test(v))return 2; if(/หัวหน้าหน่วย/.test(v))return 3; if(/^พยาบาล|ดูแล/.test(v))return 4; if(/ผู้ช่วยพยาบาล/.test(v))return 5; if(/ทันตกรรม/.test(v))return 6; if(/บริหารงานทั่วไป/.test(v))return 7; return 8; };
+
+  function blank(){ return {n:0, age:[0,0,0,0], pos:[0,0,0,0,0,0,0,0,0], exp:[0,0,0,0,0,0], edu:[0,0,0,0,0,0], gender:[0,0,0], region:[0,0,0]}; }
+
+  for (var i=0;i<rows.length;i++){
+    var r = rows[i];
+    var deptName = (r.dept||'').replace('งานการพยาบาล','').replace('งานบริหารฝ่ายการพยาบาล','บริหาร');
+    /* normalize to short labels used in DL */
+    var key = null;
+    if(/ผู้ป่วยนอก/.test(r.dept)) key='ผู้ป่วยนอก';
+    else if(/ผู้ป่วยใน/.test(r.dept)) key='ผู้ป่วยใน';
+    else if(/วิกฤต/.test(r.dept)) key='ผู้ป่วยวิกฤต';
+    else if(/วิสัญญี/.test(r.dept)) key='วิสัญญี';
+    else if(/ผ่าตัด|คลอด/.test(r.dept)) key='ผ่าตัด/คลอด';
+    else if(/ประสาน/.test(r.dept)) key='ประสานงาน';
+    else if(/อุบัติเหตุ|ฉุกเฉิน/.test(r.dept)) key='อุบัติเหตุ/ฉุกเฉิน';
+    else if(/บริหาร/.test(r.dept)) key='บริหาร';
+    if(!key) continue;
+    if(!deptMap[key]) deptMap[key]=blank();
+    var o=deptMap[key]; o.n++;
+    var ai=ageIdx(r.age||'');       if(ai>=0)o.age[ai]++;
+    var gi=genderIdx(r.gender||''); o.gender[gi]++;
+    var ei=eduIdx(r.edu||'');       o.edu[ei]++;
+    var xi=expIdx(r.exp||'');       if(xi>=0)o.exp[xi]++;
+    var ri=regionIdx(r.region||''); o.region[ri]++;
+    var pi=posIdx(r.pos||'');       o.pos[pi]++;
+  }
+  return deptMap;
+}
+
+function initDemographic() {
+  DEMO_CI = true;
+  buildDeptSelector();
   renderDemographic();
+  /* ดึงข้อมูล real-time จาก Google Sheets */
+  fetchLiveDemographic();
+}
+
+function fetchLiveDemographic() {
+  if (!GS_URL || GS_URL.indexOf('script.google.com') === -1) return;
+  var noteEl = document.getElementById('demo-note');
+  if (noteEl) noteEl.textContent = '⏳ กำลังโหลดข้อมูลล่าสุด...';
+  fetch(GS_URL + '?action=getdata')
+    .then(function(res){ return res.json(); })
+    .then(function(json){
+      if (json && json.rows && json.rows.length > 0) {
+        var agg = aggregateFromRows(json.rows);
+        if (Object.keys(agg).length > 0) {
+          DEMOGRAPHIC = agg;
+          buildDeptSelector();
+          renderDemographic();
+          var liveCount = json.rows.length;
+          var n2 = document.getElementById('demo-note');
+          if (n2) n2.textContent = '🟢 ข้อมูลสด ' + liveCount + ' รายการ · ปีงบ 2569';
+        } else {
+          setDemoEmpty();
+        }
+      } else {
+        setDemoEmpty();
+      }
+    })
+    .catch(function(err){
+      /* ถ้าดึงไม่ได้ ใช้ข้อมูลตัวอย่างเดิม */
+      var n3 = document.getElementById('demo-note');
+      if (n3) n3.textContent = 'ℹ️ แสดงข้อมูลตัวอย่าง (รอข้อมูลจริง)';
+    });
+}
+
+function setDemoEmpty() {
+  var n = document.getElementById('demo-note');
+  if (n) n.textContent = 'ℹ️ ยังไม่มีผู้ตอบแบบสอบถาม · แสดงข้อมูลตัวอย่าง';
 }
 </script>
 </body>
