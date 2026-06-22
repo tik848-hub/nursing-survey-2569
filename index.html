@@ -554,13 +554,13 @@ tr:hover td { background: var(--g50); }
 .ytab:hover{border-color:var(--blue-md);color:var(--blue);background:var(--blue-xlt);}
 .ytab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
 .pct-card{background:var(--g0);border-radius:var(--r-lg);border:1px solid var(--g200);padding:1rem 1.25rem;box-shadow:var(--shadow-sm);text-align:center;}
-.pct-ring{width:90px;height:90px;margin:0 auto 8px;position:relative;}
-.pct-ring svg{transform:rotate(-90deg);}
-.ring-bg{fill:none;stroke:var(--g100);stroke-width:9;}
-.ring-fill{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);}
-.pct-ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.pct-val{font-size:20px;font-weight:700;line-height:1.1;}
-.pct-sub{font-size:9px;color:var(--g400);}
+.pct-ring{width:120px;height:120px;margin:0 auto 8px;position:relative;}
+.pct-ring svg{transform:rotate(-90deg);display:block;}
+.ring-bg{fill:none;stroke:var(--g100);stroke-width:8;}
+.ring-fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);}
+.pct-ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+.pct-val{font-size:24px;font-weight:700;line-height:1.05;letter-spacing:-.5px;}
+.pct-sub{font-size:10px;color:var(--g400);margin-top:1px;}
 .pct-lbl{font-size:12.5px;font-weight:700;margin-bottom:2px;}
 .pct-desc{font-size:11px;color:var(--g500);}
 
@@ -653,6 +653,12 @@ tr:hover td { background: var(--g50); }
   .landing-btn   { padding: 15px 18px; gap: 14px; }
   .landing-btn-icon { width: 44px; height: 44px; font-size: 22px; }
   .landing-btn-name { font-size: 15px; }
+  /* pct cards stack vertically on mobile for clarity */
+  #pct-cards { grid-template-columns: 1fr !important; }
+  .pct-card { display: flex; align-items: center; gap: 16px; text-align: left; padding: 14px 18px; }
+  .pct-card .pct-lbl { order: 1; flex: 1; margin-bottom: 0; font-size: 14px; }
+  .pct-ring { order: 0; margin: 0; width: 100px; height: 100px; flex-shrink: 0; }
+  .pct-card .pct-desc { display: none; }
 }
 </style>
 </head>
@@ -1105,10 +1111,10 @@ tr:hover td { background: var(--g50); }
         <button class="ytab" onclick="switchYear(2563,this)">2563</button>
         <button class="ytab" onclick="switchYear(2564,this)">2564</button>
         <button class="ytab" onclick="switchYear(2565,this)">2565</button>
-        <button class="ytab" onclick="switchYear(2566,this)">2566</button>
+        <button class="ytab" onclick="switchYear(2566,this)" style="opacity:.5">2566</button>
         <button class="ytab" onclick="switchYear(2567,this)">2567</button>
-        <button class="ytab" onclick="switchYear(2568,this)">2568</button>
-        <button class="ytab active" onclick="switchYear(2569,this)">2569</button>
+        <button class="ytab active" onclick="switchYear(2568,this)">2568</button>
+        <button class="ytab" onclick="switchYear(2569,this)" style="border-style:dashed">⏳ 2569</button>
       </div>
       <span id="year-label" style="font-size:12px;color:var(--g400);margin-left:auto;">แสดงข้อมูลปี 2569</span>
     </div>
@@ -1138,7 +1144,7 @@ tr:hover td { background: var(--g50); }
   </div>
 
   <!-- CHART: DEPT COMPARISON -->
-  <div class="card">
+  <div class="card" id="dept-bar-card">
     <div class="sec-title"><span class="sec-title-bar"></span>เปรียบเทียบ 3 มิติ รายงานการพยาบาล (ปี <span id="dept-year-lbl">2569</span>)</div>
     <div class="leg">
       <span><span class="ld" style="background:#2B78D4"></span>ความพึงพอใจ</span>
@@ -1521,14 +1527,54 @@ window.addEventListener('load', loadGSUrl);
 /* ── 14. HISTORICAL DATA ── */
 var YEARS = [2562,2563,2564,2565,2566,2567,2568,2569];
 var YEAR_DATA = {
-  2562:{sat:3.72,eng:3.68,hap:3.70,pctSat:58,pctEng:55,pctHap:57,n:198},
-  2563:{sat:3.80,eng:3.75,hap:3.78,pctSat:63,pctEng:60,pctHap:62,n:210},
-  2564:{sat:3.86,eng:3.81,hap:3.84,pctSat:67,pctEng:64,pctHap:66,n:215},
-  2565:{sat:3.92,eng:3.88,hap:3.90,pctSat:71,pctEng:68,pctHap:70,n:221},
-  2566:{sat:3.98,eng:3.93,hap:3.96,pctSat:74,pctEng:71,pctHap:73,n:228},
-  2567:{sat:4.03,eng:3.97,hap:4.00,pctSat:77,pctEng:74,pctHap:76,n:235},
-  2568:{sat:4.08,eng:4.02,hap:4.05,pctSat:80,pctEng:77,pctHap:79,n:240},
-  2569:{sat:4.13,eng:4.07,hap:4.10,pctSat:83,pctEng:80,pctHap:82,n:249}
+  /* ===== ข้อมูลจริงจากรายงานฝ่ายการพยาบาล =====
+     pctSat/pctEng/pctHap = ร้อยละบุคลากรระดับดี (คะแนน >= 4)
+     pctBySec = ร้อยละรายด้าน [บังคับบัญชา,ลักษณะงาน,ก้าวหน้า,สัมพันธภาพ,ค่าตอบแทน,สิ่งแวดล้อม]
+     sat/eng/hap = คะแนนเฉลี่ย (เต็ม 5) — null ถ้าไม่มีข้อมูล
+     n = จำนวนผู้ตอบ — null ถ้าไม่มีข้อมูล
+  ================================================= */
+  2562:{
+    n:null, sat:null, eng:null, hap:null,
+    pctSat:63.64, pctEng:59.56, pctHap:71.21,
+    pctBySec:[60.42, 71.66, 53.46, 78.87, 53.18, 59.51]
+  },
+  2563:{
+    n:null, sat:null, eng:null, hap:null,
+    pctSat:74.74, pctEng:70.28, pctHap:75.99,
+    pctBySec:[77.19, 82.27, 66.21, 87.26, 63.55, 78.14]
+  },
+  2564:{
+    n:null, sat:null, eng:null, hap:null,
+    pctSat:65.79, pctEng:59.84, pctHap:66.69,
+    pctBySec:[68.99, 60.88, 76.05, 55.13, 70.94, 66.29]
+  },
+  2565:{
+    n:null, sat:null, eng:null, hap:null,
+    pctSat:62.43, pctEng:52.53, pctHap:69.85,
+    pctBySec:[62.63, 73.64, 53.82, 80.00, 43.54, 67.96]
+  },
+  2566:{
+    n:null, sat:null, eng:null, hap:null,
+    pctSat:null, pctEng:null, pctHap:null,
+    pctBySec:[null,null,null,null,null,null],
+    noRecord:true
+  },
+  2567:{
+    n:975, sat:null, eng:null, hap:null,
+    pctSat:75.01, pctEng:75.70, pctHap:76.43,
+    pctBySec:[73.73, 82.48, 66.74, 87.23, 58.30, 82.27]
+  },
+  2568:{
+    n:903, sat:3.94, eng:3.96, hap:4.02,
+    pctSat:76.03, pctEng:76.24, pctHap:79.15,
+    pctBySec:[72.43, 82.99, 66.51, 86.86, 62.46, 83.68]
+  },
+  2569:{
+    n:null, sat:null, eng:null, hap:null,
+    pctSat:null, pctEng:null, pctHap:null,
+    pctBySec:[null,null,null,null,null,null],
+    pending:true
+  }
 };
 var DL = ['ผู้ป่วยนอก','ผู้ป่วยใน','ผู้ป่วยวิกฤต','วิสัญญี','ผ่าตัด/คลอด','ประสานงาน','อุบัติเหตุ/ฉุกเฉิน','บริหาร'];
 var DEPT_YEAR = {
@@ -1551,48 +1597,207 @@ function lc(v){ return v>=4.2?'bhi':v>=3.7?'bmd':'blo'; }
 
 function drawRing(elId, pct, color) {
   var el = document.getElementById(elId); if(!el) return;
-  var r=36, circ=2*Math.PI*r, offset=circ*(1-pct/100);
-  el.innerHTML='<svg width="90" height="90" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="'+r+'"/><circle class="ring-fill" cx="45" cy="45" r="'+r+'" stroke="'+color+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/></svg><div class="pct-ring-inner"><div class="pct-val" style="color:'+color+'">'+pct+'%</div><div class="pct-sub">ระดับดี</div></div>';
+  var r = 50, circ = 2*Math.PI*r, offset = circ*(1-pct/100);
+  var pctTxt = (typeof pct === 'number') ? pct.toFixed(2) : pct;
+  el.innerHTML =
+    '<svg width="120" height="120" viewBox="0 0 120 120">' +
+      '<circle class="ring-bg" cx="60" cy="60" r="' + r + '"/>' +
+      '<circle class="ring-fill" cx="60" cy="60" r="' + r + '" stroke="' + color + '" ' +
+        'stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/>' +
+    '</svg>' +
+    '<div class="pct-ring-inner">' +
+      '<div class="pct-val" style="color:' + color + '">' + pctTxt + '%</div>' +
+      '<div class="pct-sub">ระดับดี</div>' +
+    '</div>';
 }
 
 function switchYear(yr, el) {
   curYear = yr;
   document.querySelectorAll('.ytab').forEach(function(b){ b.classList.remove('active'); });
   el.classList.add('active');
-  document.getElementById('year-label').textContent = 'แสดงข้อมูลปี ' + yr;
-  document.getElementById('dept-year-lbl').textContent = yr;
+  var lbl = document.getElementById('year-label');
+  if(lbl) lbl.textContent = 'แสดงข้อมูลปี ' + yr;
+  var dlbl = document.getElementById('dept-year-lbl');
+  if(dlbl) dlbl.textContent = yr;
+  var dcard = document.getElementById('dept-bar-card');
+  if(dcard) dcard.style.display = (yr >= 2569) ? 'block' : 'none';
   renderOverviewCharts();
 }
 
 function renderOverviewCharts() {
-  var yd=YEAR_DATA[curYear];
-  var sa=yd.sat.toFixed(2), en=yd.eng.toFixed(2), ha=yd.hap.toFixed(2);
-  var ov=(((+sa)+(+en)+(+ha))/3).toFixed(2);
-  document.getElementById('ov-metrics').innerHTML=
-    '<div class="metric"><div class="metric-val" style="color:var(--blue)">'+yd.n+'</div><div class="metric-lbl">ผู้ตอบ<br>แบบสอบถาม</div></div>'+
-    '<div class="metric"><div class="metric-val" style="color:var(--teal)">'+sa+'</div><div class="metric-lbl">ความพึงพอใจ<br>(6 ด้าน)</div></div>'+
-    '<div class="metric"><div class="metric-val" style="color:var(--amber)">'+en+'</div><div class="metric-lbl">ความยึดมั่น<br>ผูกพัน</div></div>'+
-    '<div class="metric"><div class="metric-val" style="color:var(--purple)">'+ha+'</div><div class="metric-lbl">ความสุขของ<br>บุคลากร</div></div>'+
-    '<div class="metric"><div class="metric-val">'+ov+'</div><div class="metric-lbl">คะแนนรวม<br>/ 5.00</div></div>'+
+  var yd = YEAR_DATA[curYear];
+
+  /* ── YEAR WITH NO RECORD (2566) ── */
+  if (yd.noRecord) {
+    document.getElementById('ov-metrics').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:2rem 1rem;color:var(--g500)">' +
+      '<div style="font-size:44px;margin-bottom:.75rem">📭</div>' +
+      '<div style="font-size:16px;font-weight:700;color:var(--g700)">ปี ' + curYear + ' — ไม่ได้เก็บข้อมูล</div>' +
+      '<div style="font-size:13px;margin-top:6px">ฝ่ายการพยาบาลไม่ได้ดำเนินการสำรวจในปีนี้</div></div>';
+    document.getElementById('pct-cards').innerHTML = '';
+    ['radarChart','trendChart','deptbarChart','pctTrendChart'].forEach(function(k){
+      if(window[k]){window[k].destroy();window[k]=null;}
+    });
+    renderTrendOnly();
+    return;
+  }
+
+  /* ── PENDING YEAR (2569) ── */
+  if (yd.pending) {
+    document.getElementById('ov-metrics').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:2rem 1rem;">' +
+      '<div style="font-size:44px;margin-bottom:.75rem">⏳</div>' +
+      '<div style="font-size:16px;font-weight:700;color:var(--blue)">ปี 2569 — กำลังดำเนินการเก็บข้อมูล</div>' +
+      '<div style="font-size:13px;color:var(--g500);margin-top:6px">ข้อมูลจะแสดงหลังจากประมวลผลแบบสอบถามเสร็จสิ้น</div>' +
+      '<div style="margin-top:1rem;display:inline-flex;align-items:center;gap:8px;background:var(--blue-lt);border-radius:20px;padding:6px 16px;font-size:12.5px;color:var(--blue);font-weight:600">' +
+      '<span>📋</span> ข้อมูลรายงานแต่ละงานจะเริ่มแสดงที่ปีนี้เป็นปีแรก</div></div>';
+    document.getElementById('pct-cards').innerHTML = '';
+    ['radarChart','trendChart','deptbarChart','pctTrendChart'].forEach(function(k){
+      if(window[k]){window[k].destroy();window[k]=null;}
+    });
+    renderTrendOnly();
+    return;
+  }
+
+  /* ── NORMAL YEAR ── */
+  var nLabel  = yd.n ? yd.n + ' คน' : 'ไม่ระบุ';
+  var satLbl  = yd.sat ? yd.sat.toFixed(2) : '—';
+  var engLbl  = yd.eng ? yd.eng.toFixed(2) : '—';
+  var hapLbl  = yd.hap ? yd.hap.toFixed(2) : '—';
+  var hasAvg  = yd.sat !== null;
+  var ovLbl   = hasAvg ? (((yd.sat+yd.eng+yd.hap)/3).toFixed(2)) : '—';
+
+  /* KPI Metrics */
+  document.getElementById('ov-metrics').innerHTML =
+    '<div class="metric"><div class="metric-val" style="color:var(--blue);font-size:' + (yd.n ? '26px' : '18px') + '">' + nLabel + '</div><div class="metric-lbl">ผู้ตอบ<br>แบบสอบถาม</div></div>' +
+    '<div class="metric"><div class="metric-val" style="color:var(--teal)">' + satLbl + '</div><div class="metric-lbl">ความพึงพอใจ<br>(6 ด้าน)</div></div>' +
+    '<div class="metric"><div class="metric-val" style="color:var(--amber)">' + engLbl + '</div><div class="metric-lbl">ความยึดมั่น<br>ผูกพัน</div></div>' +
+    '<div class="metric"><div class="metric-val" style="color:var(--purple)">' + hapLbl + '</div><div class="metric-lbl">ความสุขของ<br>บุคลากร</div></div>' +
+    '<div class="metric"><div class="metric-val">' + ovLbl + '</div><div class="metric-lbl">คะแนนรวม<br>/ 5.00</div></div>' +
     '<div class="metric"><div class="metric-val" style="color:var(--green)">8</div><div class="metric-lbl">งานการ<br>พยาบาล</div></div>';
-  document.getElementById('pct-cards').innerHTML=
-    '<div class="pct-card"><div class="pct-lbl" style="color:#1558A0">💙 ความพึงพอใจ</div><div class="pct-ring" id="ring-sat"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>'+
-    '<div class="pct-card"><div class="pct-lbl" style="color:#0A7B6C">💚 ความยึดมั่นผูกพัน</div><div class="pct-ring" id="ring-eng"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>'+
+
+  /* % Good Level Ring Cards */
+  document.getElementById('pct-cards').innerHTML =
+    '<div class="pct-card"><div class="pct-lbl" style="color:#1558A0">💙 ความพึงพอใจ</div><div class="pct-ring" id="ring-sat"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>' +
+    '<div class="pct-card"><div class="pct-lbl" style="color:#0A7B6C">💚 ความยึดมั่นผูกพัน</div><div class="pct-ring" id="ring-eng"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>' +
     '<div class="pct-card"><div class="pct-lbl" style="color:#5244B8">💜 ความสุข</div><div class="pct-ring" id="ring-hap"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>';
-  setTimeout(function(){ drawRing('ring-sat',yd.pctSat,'#1558A0'); drawRing('ring-eng',yd.pctEng,'#0A7B6C'); drawRing('ring-hap',yd.pctHap,'#5244B8'); },50);
+  setTimeout(function(){
+    if(yd.pctSat) drawRing('ring-sat', yd.pctSat, '#1558A0');
+    if(yd.pctEng) drawRing('ring-eng', yd.pctEng, '#0A7B6C');
+    if(yd.pctHap) drawRing('ring-hap', yd.pctHap, '#5244B8');
+  }, 50);
+
+  /* Radar Chart — ร้อยละรายด้าน + eng + hap */
+  var secNames = ['การบังคับบัญชา','ลักษณะงาน','ความก้าวหน้า','สัมพันธภาพ','ค่าตอบแทน','สิ่งแวดล้อม','ความยึดมั่น','ความสุข'];
+  var hasBySec = yd.pctBySec && yd.pctBySec[0] !== null;
+  var radarData;
+  if (hasAvg) {
+    /* มี avg score — plot คะแนนเฉลี่ย scale 0-5 */
+    radarData = [yd.sat, yd.sat, yd.sat, yd.sat, yd.sat, yd.sat, yd.eng, yd.hap];
+    /* use dim if available */
+  } else if (hasBySec) {
+    /* มีแค่ % — scale 0-100 แสดงแยก */
+    radarData = yd.pctBySec.concat([yd.pctEng, yd.pctHap]);
+  } else {
+    radarData = [0,0,0,0,0,0,0,0];
+  }
+  var radarLabel = hasBySec && !hasAvg ? 'ร้อยละระดับดี (%)' : 'คะแนนเฉลี่ย (เต็ม 5)';
+  var radarMax   = hasBySec && !hasAvg ? 100 : 5;
+  var radarStep  = hasBySec && !hasAvg ? 20  : 1;
   if(radarChart){radarChart.destroy();}
-  radarChart=new Chart(document.getElementById('c-radar'),{type:'radar',data:{labels:['การบังคับบัญชา','ลักษณะงาน','ความก้าวหน้า','สัมพันธภาพ','ค่าตอบแทน','สิ่งแวดล้อม','ความยึดมั่น','ความสุข'],datasets:[{label:'คะแนน',data:[wAvgY('s1'),wAvgY('s2'),wAvgY('s3'),wAvgY('s4'),wAvgY('s5'),wAvgY('s6'),wAvgY('eng'),wAvgY('hap')],borderColor:'#1558A0',backgroundColor:'rgba(21,88,160,.15)',pointBackgroundColor:'#1558A0',borderWidth:2,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,ticks:{stepSize:1,backdropColor:'transparent',font:{size:10}},pointLabels:{font:{size:11},color:'#636E82'}}}}});
-  var yL=YEARS.map(function(y){return ''+y;});
-  if(trendChart){trendChart.destroy();}
-  trendChart=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:yL,datasets:[{label:'ความพึงพอใจ',data:YEARS.map(function(y){return YEAR_DATA[y].sat;}),borderColor:'#1558A0',tension:.4,fill:false,pointRadius:5,borderWidth:2.5,pointBackgroundColor:'#1558A0',pointBorderWidth:0},{label:'ความยึดมั่น',data:YEARS.map(function(y){return YEAR_DATA[y].eng;}),borderColor:'#0A7B6C',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#0A7B6C',pointBorderWidth:0},{label:'ความสุข',data:YEARS.map(function(y){return YEAR_DATA[y].hap;}),borderColor:'#5244B8',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[2,3],pointBackgroundColor:'#5244B8',pointBorderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3.4,max:4.4,ticks:{stepSize:.1,font:{size:11}}},x:{ticks:{font:{size:11}}}}}});
-  var dd=DDY();
-  if(deptbarChart){deptbarChart.destroy();}
-  deptbarChart=new Chart(document.getElementById('c-deptbar'),{type:'bar',data:{labels:DL,datasets:[{label:'ความพึงพอใจ',data:DL.map(function(k){return dd[k]?+satAvg(dd[k]).toFixed(2):0;}),backgroundColor:'#2B78D4',borderRadius:5},{label:'ความยึดมั่น',data:DL.map(function(k){return dd[k]?dd[k].eng:0;}),backgroundColor:'#0A7B6C',borderRadius:5},{label:'ความสุข',data:DL.map(function(k){return dd[k]?dd[k].hap:0;}),backgroundColor:'#5244B8',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3,max:5,ticks:{font:{size:11}}},x:{ticks:{font:{size:11},maxRotation:30}}}}});
-  if(pctTrendChart){pctTrendChart.destroy();}
-  pctTrendChart=new Chart(document.getElementById('c-pct-trend'),{type:'line',data:{labels:yL,datasets:[{label:'ความพึงพอใจ',data:YEARS.map(function(y){return YEAR_DATA[y].pctSat;}),borderColor:'#1558A0',tension:.4,fill:false,pointRadius:5,borderWidth:2.5,pointBackgroundColor:'#1558A0',pointBorderWidth:0},{label:'ความยึดมั่น',data:YEARS.map(function(y){return YEAR_DATA[y].pctEng;}),borderColor:'#0A7B6C',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#0A7B6C',pointBorderWidth:0},{label:'ความสุข',data:YEARS.map(function(y){return YEAR_DATA[y].pctHap;}),borderColor:'#5244B8',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[2,3],pointBackgroundColor:'#5244B8',pointBorderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:40,max:100,ticks:{stepSize:10,font:{size:11},callback:function(v){return v+'%';}}},x:{ticks:{font:{size:11}}}}}});
+  radarChart = new Chart(document.getElementById('c-radar'), {type:'radar',
+    data:{labels:secNames, datasets:[{label:radarLabel, data:radarData,
+      borderColor:'#1558A0', backgroundColor:'rgba(21,88,160,.15)',
+      pointBackgroundColor:'#1558A0', borderWidth:2, pointRadius:4}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{r:{min:0, max:radarMax,
+        ticks:{stepSize:radarStep, backdropColor:'transparent', font:{size:10}},
+        pointLabels:{font:{size:11}, color:'#636E82'}}}}});
+
+  renderTrendOnly();
+
+  /* Dept Bar — only for 2569+ */
+  var hasDept = curYear >= 2569 && DEPT_YEAR[curYear];
+  var deptSec = document.getElementById('dept-bar-card');
+  if (deptSec) {
+    deptSec.style.display = hasDept ? 'block' : 'none';
+  }
+  if (hasDept) {
+    var dd = DDY();
+    if(deptbarChart){deptbarChart.destroy();}
+    deptbarChart = new Chart(document.getElementById('c-deptbar'), {type:'bar',
+      data:{labels:DL, datasets:[
+        {label:'ความพึงพอใจ', data:DL.map(function(k){return dd[k]?+satAvg(dd[k]).toFixed(2):0;}), backgroundColor:'#2B78D4', borderRadius:5},
+        {label:'ความยึดมั่น', data:DL.map(function(k){return dd[k]?dd[k].eng:0;}), backgroundColor:'#0A7B6C', borderRadius:5},
+        {label:'ความสุข',     data:DL.map(function(k){return dd[k]?dd[k].hap:0;}), backgroundColor:'#5244B8', borderRadius:5}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{y:{min:3, max:5, ticks:{font:{size:11}}}, x:{ticks:{font:{size:11}, maxRotation:30}}}}});
+  }
 }
 
-function initOverview(){ CI.ov=true; renderOverviewCharts(); }
+/* ── TREND CHARTS (always rendered regardless of selected year) ── */
+function renderTrendOnly() {
+  var yL   = YEARS.map(function(y){ return String(y); });
+  /* For avg score trend — only show years that have data */
+  var dSat = YEARS.map(function(y){ var d=YEAR_DATA[y]; return d.sat !== null ? d.sat : null; });
+  var dEng = YEARS.map(function(y){ var d=YEAR_DATA[y]; return d.eng !== null ? d.eng : null; });
+  var dHap = YEARS.map(function(y){ var d=YEAR_DATA[y]; return d.hap !== null ? d.hap : null; });
+  /* For pct trend — all years */
+  var pSat = YEARS.map(function(y){ var d=YEAR_DATA[y]; return d.pctSat !== null ? d.pctSat : null; });
+  var pEng = YEARS.map(function(y){ var d=YEAR_DATA[y]; return d.pctEng !== null ? d.pctEng : null; });
+  var pHap = YEARS.map(function(y){ var d=YEAR_DATA[y]; return d.pctHap !== null ? d.pctHap : null; });
+
+  var commonOpts = {spanGaps:true, tension:.4, fill:false, pointRadius:5, borderWidth:2.5, pointBorderWidth:0};
+  var hasAvgAny  = dSat.some(function(v){ return v !== null; });
+
+  if(trendChart){trendChart.destroy();}
+  trendChart = new Chart(document.getElementById('c-trend'), {type:'line',
+    data:{labels:yL, datasets:[
+      Object.assign({},commonOpts,{label:'ความพึงพอใจ', data:dSat, borderColor:'#1558A0', pointBackgroundColor:'#1558A0'}),
+      Object.assign({},commonOpts,{label:'ความยึดมั่น',  data:dEng, borderColor:'#0A7B6C', pointBackgroundColor:'#0A7B6C', borderDash:[5,4], borderWidth:2}),
+      Object.assign({},commonOpts,{label:'ความสุข',      data:dHap, borderColor:'#5244B8', pointBackgroundColor:'#5244B8', borderDash:[2,3], borderWidth:2})
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){ return c.dataset.label + ': ' + (c.parsed.y !== null ? c.parsed.y.toFixed(2) : 'ไม่มีข้อมูล'); }}}},
+      scales:{y:{min:3.5, max:4.5, ticks:{stepSize:.1, font:{size:11}}},
+              x:{ticks:{font:{size:11}}}}}});
+
+  if(pctTrendChart){pctTrendChart.destroy();}
+  pctTrendChart = new Chart(document.getElementById('c-pct-trend'), {type:'line',
+    data:{labels:yL, datasets:[
+      Object.assign({},commonOpts,{label:'ความพึงพอใจ', data:pSat, borderColor:'#1558A0', pointBackgroundColor:'#1558A0'}),
+      Object.assign({},commonOpts,{label:'ความยึดมั่น',  data:pEng, borderColor:'#0A7B6C', pointBackgroundColor:'#0A7B6C', borderDash:[5,4], borderWidth:2}),
+      Object.assign({},commonOpts,{label:'ความสุข',      data:pHap, borderColor:'#5244B8', pointBackgroundColor:'#5244B8', borderDash:[2,3], borderWidth:2})
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){ return c.dataset.label + ': ' + (c.parsed.y !== null ? c.parsed.y.toFixed(1)+'%' : 'ไม่มีข้อมูล'); }}}},
+      scales:{y:{min:40, max:100, ticks:{stepSize:10, font:{size:11}, callback:function(v){ return v+'%'; }}},
+              x:{ticks:{font:{size:11}}}}}});
+}
+
+function initOverview(){
+  CI.ov=true;
+  /* Default to 2568 — most recent year with complete data */
+  curYear = 2568;
+  /* Set active tab to 2568 */
+  document.querySelectorAll('.ytab').forEach(function(b){ b.classList.remove('active'); });
+  var tabs = document.querySelectorAll('.ytab');
+  /* 2568 is index 6 (0-based: 2562=0,2563=1,...2568=6,2569=7) */
+  if(tabs[6]) tabs[6].classList.add('active');
+  var lbl = document.getElementById('year-label');
+  if(lbl) lbl.textContent = 'แสดงข้อมูลปี 2568';
+  var dlbl = document.getElementById('dept-year-lbl');
+  if(dlbl) dlbl.textContent = '2568';
+  /* Hide dept card initially (only shows for 2569) */
+  var dcard = document.getElementById('dept-bar-card');
+  if(dcard) dcard.style.display = 'none';
+  renderOverviewCharts();
+}
 
 var wdChart=null;
 function initByWard(){
