@@ -765,12 +765,16 @@ tr:hover td { background: var(--g50); }
     <svg class="tab-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     วิเคราะห์เชิงลึก
   </button>
+  <button class="tab" onclick="gotoPageDash('demographic',this)" role="tab">
+    <svg class="tab-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    ข้อมูลประชากร
+  </button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
      PAGE: SURVEY
 ══════════════════════════════════════════════════════════ -->
-<div id="page-survey" class="page active">
+<div id="page-survey" class="page">
   <div id="survey-form">
 
     <!-- PROGRESS -->
@@ -1200,6 +1204,73 @@ tr:hover td { background: var(--g50); }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
+     PAGE: DEMOGRAPHIC (ข้อมูลประชากร)
+══════════════════════════════════════════════════════════ -->
+<div id="page-demographic" class="page">
+  <!-- View toggle: รวม vs แยกงาน -->
+  <div class="card card-sm" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:600;color:var(--g600);white-space:nowrap;">👥 มุมมอง:</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="ytab active" id="demo-view-all" onclick="switchDemoView('all',this)">ภาพรวมฝ่าย</button>
+        <button class="ytab" id="demo-view-dept" onclick="switchDemoView('dept',this)">แยกงานการพยาบาล</button>
+      </div>
+      <span style="font-size:12px;color:var(--g400);margin-left:auto;" id="demo-note">ข้อมูลปีงบ 2569</span>
+    </div>
+  </div>
+
+  <!-- Dept selector (shown only in dept view) -->
+  <div class="card card-sm" id="demo-dept-selector" style="margin-bottom:1rem;display:none;">
+    <div class="ff">
+      <label class="fl" style="margin-bottom:6px;">เลือกงานการพยาบาล</label>
+      <select id="demo-dept-select" onchange="renderDemographic()">
+        <option value="all">— ทุกงาน (ภาพรวม) —</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Summary metrics -->
+  <div class="metrics" id="demo-metrics"></div>
+
+  <!-- Charts grid -->
+  <div class="g2">
+    <div class="card">
+      <div class="sec-title"><span class="sec-title-bar"></span>จำแนกตามช่วงอายุ</div>
+      <div class="cwsm"><canvas id="demo-age" role="img" aria-label="Age distribution"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="sec-title"><span class="sec-title-bar"></span>จำแนกตามตำแหน่ง</div>
+      <div class="cwsm"><canvas id="demo-pos" role="img" aria-label="Position distribution"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec-title"><span class="sec-title-bar"></span>จำแนกตามประสบการณ์</div>
+      <div class="cwsm"><canvas id="demo-exp" role="img" aria-label="Experience distribution"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="sec-title"><span class="sec-title-bar"></span>จำแนกตามวุฒิการศึกษา</div>
+      <div class="cwsm"><canvas id="demo-edu" role="img" aria-label="Education distribution"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec-title"><span class="sec-title-bar"></span>จำแนกตามเพศ</div>
+      <div class="cwsm"><canvas id="demo-gender" role="img" aria-label="Gender distribution"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="sec-title"><span class="sec-title-bar"></span>จำแนกตามภูมิลำเนา</div>
+      <div class="cwsm"><canvas id="demo-region" role="img" aria-label="Region distribution"></canvas></div>
+    </div>
+  </div>
+  <!-- Dept distribution (only in 'all' view) -->
+  <div class="card" id="demo-dept-card">
+    <div class="sec-title"><span class="sec-title-bar"></span>จำนวนผู้ตอบแยกตามงานการพยาบาล</div>
+    <div style="position:relative;width:100%;height:240px"><canvas id="demo-dept-bar" role="img" aria-label="Dept count"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
      JAVASCRIPT  (ES5 — no backticks, no arrow functions)
 ══════════════════════════════════════════════════════════ -->
 <script>
@@ -1489,9 +1560,10 @@ function gotoPageDash(name, el) {
   document.querySelectorAll('#tabs-dash .tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
   if (el) el.classList.add('active');
-  if (name === 'overview' && !CI.ov) initOverview();
-  if (name === 'byward'   && !CI.bw) initByWard();
-  if (name === 'analysis' && !CI.an) initAnalysis();
+  if (name === 'overview'    && !CI.ov)    initOverview();
+  if (name === 'byward'      && !CI.bw)    initByWard();
+  if (name === 'analysis'    && !CI.an)    initAnalysis();
+  if (name === 'demographic' && !DEMO_CI)  initDemographic();
 }
 
 /* ── 13. GOOGLE SHEETS URL SAVE/LOAD ── */
@@ -1843,6 +1915,139 @@ function initAnalysis(){
   var top3=sorted.slice(0,3), bot3=sorted.slice(-3).reverse();
   function rH(arr,bg,tc){return arr.map(function(d,i){return'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div style="width:28px;height:28px;background:'+bg+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:'+tc+';flex-shrink:0">'+(i+1)+'</div><div><div style="font-size:14px;font-weight:700">งาน'+d+'</div><div style="font-size:12px;color:var(--g400)">'+overall(xd[d]||{}).toFixed(2)+' / 5.00</div></div></div>';}).join('');}
   document.getElementById('sw-box').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem"><div><div style="font-size:13.5px;font-weight:700;color:var(--green);margin-bottom:12px">🏆 จุดแข็ง — สูง 3 อันดับ</div>'+rH(top3,'var(--green-lt)','var(--green)')+'</div><div><div style="font-size:13.5px;font-weight:700;color:var(--red);margin-bottom:12px">🔧 ควรพัฒนา — ต่ำ 3 อันดับ</div>'+rH(bot3,'var(--red-lt)','var(--red)')+'</div></div>';
+}
+
+/* ── DEMOGRAPHIC DASHBOARD (ข้อมูลประชากร) ── */
+/* ข้อมูลตัวอย่าง demographic ปี 2569 — จะถูกแทนที่ด้วยข้อมูลจริงจาก Google Sheets เมื่อมีผู้ตอบ */
+var DEMO_VIEW = 'all';
+var DEMO_CI = false;
+var demoCharts = {};
+
+/* โครงสร้าง: แต่ละงาน มีสัดส่วน demographic */
+var DEMOGRAPHIC = {
+  'ผู้ป่วยนอก':  {n:45, age:[8,18,14,5],  pos:[0,1,3,4,30,5,0,1,1], exp:[3,8,12,10,9,3], edu:[34,2,7,1,1,0], gender:[3,41,1], region:[28,11,6]},
+  'ผู้ป่วยใน':   {n:62, age:[20,24,14,4], pos:[0,1,4,5,42,8,0,1,1], exp:[8,14,18,12,8,2], edu:[48,3,8,1,2,0], gender:[5,56,1], region:[35,18,9]},
+  'ผู้ป่วยวิกฤต':{n:38, age:[14,15,7,2],  pos:[0,1,2,3,28,3,0,1,0], exp:[5,9,11,8,4,1], edu:[30,2,5,1,0,0], gender:[4,33,1], region:[22,11,5]},
+  'วิสัญญี':    {n:18, age:[5,7,4,2],    pos:[0,1,1,2,12,1,0,1,0], exp:[2,4,5,4,2,1], edu:[14,1,2,1,0,0], gender:[2,16,0], region:[10,5,3]},
+  'ผ่าตัด/คลอด':{n:28, age:[9,11,6,2],   pos:[0,1,2,2,20,2,0,1,0], exp:[4,6,8,6,3,1], edu:[22,1,4,0,1,0], gender:[3,24,1], region:[16,8,4]},
+  'ประสานงาน':  {n:14, age:[4,5,3,2],    pos:[0,1,1,1,9,1,0,1,0], exp:[2,3,4,3,1,1], edu:[11,1,1,1,0,0], gender:[1,13,0], region:[8,4,2]},
+  'อุบัติเหตุ/ฉุกเฉิน':{n:32, age:[13,12,5,2], pos:[0,1,2,3,23,2,0,1,0], exp:[6,8,9,6,2,1], edu:[26,1,4,1,0,0], gender:[4,27,1], region:[19,9,4]},
+  'บริหาร':     {n:12, age:[2,4,4,2],    pos:[1,1,1,1,5,1,1,1,0], exp:[1,2,3,3,2,1], edu:[8,2,2,0,0,0], gender:[2,10,0], region:[7,3,2]}
+};
+var AGE_LABELS  = ['≤30 ปี','31-40 ปี','41-50 ปี','>50 ปี'];
+var POS_LABELS  = ['หน.ฝ่าย','หน.งาน','ผู้ตรวจการ','หน.หน่วย','พยาบาล','ผช.พยาบาล','ผช.ทันตกรรม','จนท.บริหาร','ปฏิบัติงาน'];
+var EXP_LABELS  = ['<1 ปี','1-2 ปี','2-5 ปี','5-10 ปี','10-20 ปี','>20 ปี'];
+var EDU_LABELS  = ['ป.ตรี พยาบาล','ป.ตรี อื่น','ป.โท พยาบาล','ป.โท อื่น','ปวส.ผช.','อื่นๆ'];
+var GENDER_LABELS = ['ชาย','หญิง','ไม่ระบุ'];
+var REGION_LABELS = ['กรุงเทพฯ','ปริมณฑล','ต่างจังหวัด'];
+var PALETTE = ['#1558A0','#2B78D4','#0A7B6C','#14A085','#B86C10','#C0302E','#5244B8','#7C6FD4','#2A7A28'];
+
+function switchDemoView(view, el) {
+  DEMO_VIEW = view;
+  document.getElementById('demo-view-all').classList.remove('active');
+  document.getElementById('demo-view-dept').classList.remove('active');
+  el.classList.add('active');
+  document.getElementById('demo-dept-selector').style.display = (view === 'dept') ? 'block' : 'none';
+  document.getElementById('demo-dept-card').style.display     = (view === 'all') ? 'block' : 'none';
+  renderDemographic();
+}
+
+function sumDemo(key) {
+  /* รวมทุกงาน */
+  var arr = null;
+  for (var d in DEMOGRAPHIC) {
+    var v = DEMOGRAPHIC[d][key];
+    if (!arr) { arr = v.slice(); }
+    else { for (var i=0;i<v.length;i++) arr[i]+=v[i]; }
+  }
+  return arr;
+}
+
+function makeDonut(canvasId, labels, data, colors) {
+  if (demoCharts[canvasId]) { demoCharts[canvasId].destroy(); }
+  var ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  demoCharts[canvasId] = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels:labels, datasets:[{data:data, backgroundColor:colors, borderWidth:2, borderColor:'#fff'}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{legend:{position:'right', labels:{font:{size:10}, boxWidth:12, padding:6}},
+        tooltip:{callbacks:{label:function(c){
+          var total=c.dataset.data.reduce(function(a,b){return a+b;},0);
+          var pct=total?((c.parsed/total)*100).toFixed(1):0;
+          return c.label+': '+c.parsed+' คน ('+pct+'%)';
+        }}}}}});
+}
+
+function renderDemographic() {
+  var src;
+  if (DEMO_VIEW === 'all') {
+    src = {
+      n: Object.keys(DEMOGRAPHIC).reduce(function(a,d){return a+DEMOGRAPHIC[d].n;},0),
+      age: sumDemo('age'), pos: sumDemo('pos'), exp: sumDemo('exp'),
+      edu: sumDemo('edu'), gender: sumDemo('gender'), region: sumDemo('region')
+    };
+    document.getElementById('demo-note').textContent = 'ภาพรวมฝ่าย · ปีงบ 2569';
+  } else {
+    var sel = document.getElementById('demo-dept-select').value;
+    if (sel === 'all' || !DEMOGRAPHIC[sel]) {
+      src = {
+        n: Object.keys(DEMOGRAPHIC).reduce(function(a,d){return a+DEMOGRAPHIC[d].n;},0),
+        age: sumDemo('age'), pos: sumDemo('pos'), exp: sumDemo('exp'),
+        edu: sumDemo('edu'), gender: sumDemo('gender'), region: sumDemo('region')
+      };
+      document.getElementById('demo-note').textContent = 'ทุกงาน · ปีงบ 2569';
+    } else {
+      src = DEMOGRAPHIC[sel];
+      document.getElementById('demo-note').textContent = 'งาน' + sel + ' · ปีงบ 2569';
+    }
+  }
+
+  /* Metrics */
+  var femalePct = src.gender[1] ? ((src.gender[1]/src.n)*100).toFixed(0) : 0;
+  var nursePct  = src.pos[4] ? ((src.pos[4]/src.n)*100).toFixed(0) : 0;
+  var bkkPct    = src.region[0] ? ((src.region[0]/src.n)*100).toFixed(0) : 0;
+  var degPct    = (src.edu[0]+src.edu[2]) ? (((src.edu[0]+src.edu[2])/src.n)*100).toFixed(0) : 0;
+  document.getElementById('demo-metrics').innerHTML =
+    '<div class="metric"><div class="metric-val" style="color:var(--blue)">'+src.n+'</div><div class="metric-lbl">ผู้ตอบ<br>ทั้งหมด</div></div>'+
+    '<div class="metric"><div class="metric-val" style="color:var(--purple)">'+femalePct+'%</div><div class="metric-lbl">เพศหญิง</div></div>'+
+    '<div class="metric"><div class="metric-val" style="color:var(--teal)">'+nursePct+'%</div><div class="metric-lbl">ตำแหน่ง<br>พยาบาล</div></div>'+
+    '<div class="metric"><div class="metric-val" style="color:var(--green)">'+degPct+'%</div><div class="metric-lbl">วุฒิ<br>พยาบาล</div></div>'+
+    '<div class="metric"><div class="metric-val" style="color:var(--amber)">'+bkkPct+'%</div><div class="metric-lbl">ภูมิลำเนา<br>กรุงเทพฯ</div></div>';
+
+  /* Donut charts */
+  makeDonut('demo-age',    AGE_LABELS,    src.age,    ['#1558A0','#2B78D4','#5DA0E8','#A8CDF4']);
+  makeDonut('demo-pos',    POS_LABELS,    src.pos,    PALETTE);
+  makeDonut('demo-exp',    EXP_LABELS,    src.exp,    ['#0A7B6C','#14A085','#3DBFA8','#7DD4C5','#A8E4DA','#C8F0EA']);
+  makeDonut('demo-edu',    EDU_LABELS,    src.edu,    ['#5244B8','#7C6FD4','#9D93E0','#B86C10','#E8A857','#C0302E']);
+  makeDonut('demo-gender', GENDER_LABELS, src.gender, ['#2B78D4','#C0302E','#9AA3B2']);
+  makeDonut('demo-region', REGION_LABELS, src.region, ['#1558A0','#0A7B6C','#B86C10']);
+
+  /* Dept bar (only in all view) */
+  if (DEMO_VIEW === 'all') {
+    if (demoCharts['demo-dept-bar']) demoCharts['demo-dept-bar'].destroy();
+    var dl = Object.keys(DEMOGRAPHIC);
+    demoCharts['demo-dept-bar'] = new Chart(document.getElementById('demo-dept-bar'), {
+      type:'bar',
+      data:{labels:dl.map(function(d){return 'งาน'+d;}), datasets:[{label:'จำนวนผู้ตอบ',
+        data:dl.map(function(d){return DEMOGRAPHIC[d].n;}),
+        backgroundColor:PALETTE, borderRadius:5}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return c.parsed.y+' คน';}}}},
+        scales:{y:{beginAtZero:true, ticks:{font:{size:11}}}, x:{ticks:{font:{size:10}, maxRotation:30}}}}});
+  }
+}
+
+function initDemographic() {
+  DEMO_CI = true;
+  /* Populate dept selector */
+  var sel = document.getElementById('demo-dept-select');
+  for (var d in DEMOGRAPHIC) {
+    var opt = document.createElement('option');
+    opt.value = d; opt.textContent = 'งาน' + d;
+    sel.appendChild(opt);
+  }
+  renderDemographic();
 }
 </script>
 </body>
