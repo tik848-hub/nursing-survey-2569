@@ -577,10 +577,14 @@ tr:hover td { background: var(--g50); }
    LANDING PAGE
    ========================================================= */
 #page-landing {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
   min-height: 100vh;
   padding: 2rem 1.25rem;
   background: linear-gradient(160deg, #EBF3FB 0%, #F0F9F6 50%, #F5F0FF 100%);
+}
+#page-landing.show {
+  display: flex;
 }
 .landing-logo {
   width: 80px; height: 80px; border-radius: 50%;
@@ -657,7 +661,7 @@ tr:hover td { background: var(--g50); }
 <!-- ═══════════════════════════════════════════════════════
      LANDING PAGE
 ══════════════════════════════════════════════════════════ -->
-<div id="page-landing" class="landing-active">
+<div id="page-landing" class="show">
   <div class="landing-logo">🏥</div>
   <div class="landing-year">ปีงบประมาณ 2569</div>
   <div class="landing-title">แบบสอบถามบุคลากร<br>ฝ่ายการพยาบาล</div>
@@ -1193,61 +1197,26 @@ tr:hover td { background: var(--g50); }
      JAVASCRIPT  (ES5 — no backticks, no arrow functions)
 ══════════════════════════════════════════════════════════ -->
 <script>
-/* ── GOOGLE SHEETS URL PERSISTENCE ── */
-function saveGSUrl() {
-  var url = document.getElementById('gs-url-input').value.trim();
-  if (!url) { alert('กรุณาวาง URL ของ Google Apps Script'); return; }
-  GS_URL = url;
-  try { localStorage.setItem('GS_URL_NURSING', url); } catch(e) {}
-  document.getElementById('gs-setup-banner').style.display = 'none';
-  var lbl = document.getElementById('gs-status-landing');
-  if(lbl) lbl.innerHTML = '<span class="gs-ok-badge">✅ เชื่อมต่อ Google Sheets แล้ว</span>';
-  var notice = document.createElement('div');
-  notice.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#2A7A28;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
-  notice.textContent = '✅ บันทึก Google Sheets URL สำเร็จ';
-  document.body.appendChild(notice);
-  setTimeout(function(){ notice.remove(); }, 3000);
-}
-function loadGSUrl() {
-  try {
-    var saved = localStorage.getItem('GS_URL_NURSING');
-    if (saved) {
-      GS_URL = saved;
-      var inp = document.getElementById('gs-url-input');
-      if(inp) inp.value = saved;
-      var lbl = document.getElementById('gs-status-landing');
-      if(lbl) lbl.innerHTML = '<span class="gs-ok-badge">✅ เชื่อมต่อ Google Sheets แล้ว</span>';
-    }
-  } catch(e) {}
-}
-window.addEventListener('load', loadGSUrl);
+/* =============================================================
+   ALL JAVASCRIPT — clean, ordered, no backticks, ES5 only
+   ============================================================= */
 
-/* ── UNIT MAP ── */
+/* ── 1. GOOGLE SHEETS CONFIG ── */
+var GS_URL = 'https://script.google.com/macros/s/AKfycbznsTjy5eh4PY2p9z_K7XFDm6eg3-PYPDapH57qs8xNAaTg5g2mMKzgDGFJjJNR3_A/exec';
+
+/* ── 2. UNIT MAP ── */
 var UNIT_MAP = {
-  opd:['สำนักงานผู้ป่วยนอก','หน่วยตรวจผู้ป่วยนอกเวชศาสตร์ครอบครัว','หน่วยตรวจผู้ป่วยนอกเวชศาสตร์ฟื้นฟู','หน่วยตรวจผู้ป่วยนอกโสต ศอ นาสิก','หน่วยตรวจผู้ป่วยนอกกุมารเวชศาสตร์','หน่วยตรวจผู้ป่วยนอกจักษุ','หน่วยตรวจผู้ป่วยนอกจิตเวช','หน่วยตรวจผู้ป่วยนอกทันตกรรม','หน่วยตรวจผู้ป่วยนอกผิวหนัง','หน่วยตรวจผู้ป่วยนอกศัลยกรรม','หน่วยตรวจผู้ป่วยนอกศัลยกรรมกระดูก','หน่วยตรวจผู้ป่วยนอกสูติ-นรีเวช','หน่วยตรวจผู้ป่วยนอกอายุรกรรม','หน่วยตรวจผู้ป่วยนอกโรคไม่ติดต่อเรื้อรัง','หน่วยตรวจผู้ป่วยนอกพิเศษ'],
-  ipd:['สำนักงานผู้ป่วยใน','หอผู้ป่วย 5C','หอผู้ป่วย 5D','หอผู้ป่วย 5E','หอผู้ป่วย 6B1','หอผู้ป่วย 6B2','หอผู้ป่วย 6C','หอผู้ป่วย 6E','หอผู้ป่วย 6F','หอผู้ป่วย 7F'],
-  icu:['สำนักงานผู้ป่วยวิกฤต','หอผู้ป่วยวิกฤต','หอผู้ป่วยวิกฤตและโรคหลอดเลือดสมอง','หอผู้ป่วยวิกฤตหัวใจ','หอผู้ป่วยวิกฤตเด็ก','หอผู้ป่วยวิกฤตทารกแรกเกิด','หน่วยไตเทียม'],
-  anes:['สำนักงานวิสัญญี','หน่วยบริการวิสัญญีในห้องผ่าตัด','หน่วยบริการวิสัญญีนอกห้องผ่าตัด'],
-  or:['สำนักงานผ่าตัดและห้องคลอด','ห้องคลอด','ห้องผ่าตัด'],
+  opd:  ['สำนักงานผู้ป่วยนอก','หน่วยตรวจผู้ป่วยนอกเวชศาสตร์ครอบครัว','หน่วยตรวจผู้ป่วยนอกเวชศาสตร์ฟื้นฟู','หน่วยตรวจผู้ป่วยนอกโสต ศอ นาสิก','หน่วยตรวจผู้ป่วยนอกกุมารเวชศาสตร์','หน่วยตรวจผู้ป่วยนอกจักษุ','หน่วยตรวจผู้ป่วยนอกจิตเวช','หน่วยตรวจผู้ป่วยนอกทันตกรรม','หน่วยตรวจผู้ป่วยนอกผิวหนัง','หน่วยตรวจผู้ป่วยนอกศัลยกรรม','หน่วยตรวจผู้ป่วยนอกศัลยกรรมกระดูก','หน่วยตรวจผู้ป่วยนอกสูติ-นรีเวช','หน่วยตรวจผู้ป่วยนอกอายุรกรรม','หน่วยตรวจผู้ป่วยนอกโรคไม่ติดต่อเรื้อรัง','หน่วยตรวจผู้ป่วยนอกพิเศษ'],
+  ipd:  ['สำนักงานผู้ป่วยใน','หอผู้ป่วย 5C','หอผู้ป่วย 5D','หอผู้ป่วย 5E','หอผู้ป่วย 6B1','หอผู้ป่วย 6B2','หอผู้ป่วย 6C','หอผู้ป่วย 6E','หอผู้ป่วย 6F','หอผู้ป่วย 7F'],
+  icu:  ['สำนักงานผู้ป่วยวิกฤต','หอผู้ป่วยวิกฤต','หอผู้ป่วยวิกฤตและโรคหลอดเลือดสมอง','หอผู้ป่วยวิกฤตหัวใจ','หอผู้ป่วยวิกฤตเด็ก','หอผู้ป่วยวิกฤตทารกแรกเกิด','หน่วยไตเทียม'],
+  anes: ['สำนักงานวิสัญญี','หน่วยบริการวิสัญญีในห้องผ่าตัด','หน่วยบริการวิสัญญีนอกห้องผ่าตัด'],
+  or:   ['สำนักงานผ่าตัดและห้องคลอด','ห้องคลอด','ห้องผ่าตัด'],
   coord:['สำนักงานประสานงานและส่งเสริมสุขภาพ','หน่วยป้องกันโรคและส่งเสริมสุขภาพ','หน่วยประสานงานการรักษาพยาบาล'],
-  er:['สำนักงานอุบัติเหตุและฉุกเฉิน','หน่วยอุบัติเหตุและฉุกเฉิน','หน่วยดูแลผู้ป่วยระยะสั้น','หอผู้ป่วยอุบัติเหตุไฟไหม้'],
+  er:   ['สำนักงานอุบัติเหตุและฉุกเฉิน','หน่วยอุบัติเหตุและฉุกเฉิน','หน่วยดูแลผู้ป่วยระยะสั้น','หอผู้ป่วยอุบัติเหตุไฟไหม้'],
   admin:['สำนักงานบริหารฝ่ายการพยาบาล']
 };
-document.getElementById('d-dept').addEventListener('change', function() {
-  var dept = this.value;
-  var sel = document.getElementById('d-unit');
-  sel.innerHTML = '';
-  if (!dept) { sel.innerHTML = '<option value="">— เลือกงานก่อน —</option>'; return; }
-  var units = UNIT_MAP[dept] || [];
-  sel.innerHTML = '<option value="">— กรุณาเลือก —</option>';
-  for (var i = 0; i < units.length; i++) {
-    var opt = document.createElement('option');
-    opt.textContent = units[i]; opt.value = units[i];
-    sel.appendChild(opt);
-  }
-});
 
-/* ── QUESTIONS ── */
+/* ── 3. QUESTION DATA ── */
 var SECS = [
   {id:1,cont:'qs1',qs:[[1,'1.1','นโยบายของฝ่ายการพยาบาลฯ มีความชัดเจนและนำไปสู่การปฏิบัติได้จริง'],[2,'1.2','นโยบายของหน่วยงาน/งานการพยาบาลที่ท่านปฏิบัติงานอยู่มีความชัดเจนและนำไปสู่การปฏิบัติได้จริง'],[3,'1.3','ขอบเขตความรับผิดชอบและการมอบหมายงานของท่านมีความชัดเจน'],[4,'1.4','ท่านมีส่วนร่วมในการตัดสินใจในการทำงานของหน่วยงาน'],[5,'1.5','ผู้บังคับบัญชาให้ความสำคัญกับความคิดเห็นของท่าน'],[6,'1.6','ผู้บังคับบัญชาช่วยท่านแก้ไขปัญหาในการปฏิบัติงาน'],[7,'1.7','ท่านได้รับความยุติธรรมจากผู้บังคับบัญชา'],[8,'1.8','หน่วยงานเปิดโอกาสรับฟังความคิดเห็นและมีการแลกเปลี่ยนความคิดเห็นซึ่งกันและกัน'],[9,'1.9','ท่านได้รับการนิเทศ/สอนงานจากผู้บังคับบัญชา'],[10,'1.10','ท่านได้รับการยกย่องยอมรับในผลสำเร็จของงาน'],[11,'1.11','ผู้บังคับบัญชาเปิดโอกาสให้ท่านมีส่วนร่วมในการวางแผนพัฒนาหน่วยงาน']]},
   {id:2,cont:'qs2',qs:[[12,'2.1','งานที่ท่านทำเป็นงานที่มีเกียรติ น่าภาคภูมิใจ'],[13,'2.2','งานที่ท่านทำเป็นงานที่มีประโยชน์'],[14,'2.3','ท่านได้รับโอกาสให้รับผิดชอบงานสำคัญๆ'],[15,'2.4','งานมีความท้าทาย ทำให้ท่านต้องใช้ความรู้ความสามารถอย่างเต็มที่ในการปฏิบัติงาน'],[16,'2.5','ท่านสามารถใช้ความคิดริเริ่มสร้างสรรค์ในการปฏิบัติงาน'],[17,'2.6','ท่านมีอำนาจตัดสินใจในการทำงานหรือแก้ไขปัญหาได้อย่างเหมาะสม'],[18,'2.7','ภาระงานมีความเหมาะสมกับความรู้ ความสามารถและเวลา ทำให้ท่านสามารถปฏิบัติงานได้อย่างมีประสิทธิภาพ'],[19,'2.8','การจัดเวลาทำงาน/เวรการทำงานมีความเหมาะสม']]},
@@ -1259,7 +1228,7 @@ var SECS = [
   {id:8,cont:'qs8',qs:[[59,'8.1','ท่านรู้สึกมีความภาคภูมิใจในตนเอง'],[60,'8.2','ท่านรู้สึกว่าตนเองมีประโยชน์'],[61,'8.3','ท่านรู้สึกว่ามีความสุขที่ได้ช่วยเหลือผู้อื่น'],[62,'8.4','ท่านพอใจในรูปร่างหน้าตาของตนเอง'],[63,'8.5','ท่านรู้สึกว่าท่านประสบความสำเร็จในชีวิต'],[64,'8.6','ท่านสามารถดำเนินชีวิตและทำงานได้ด้วยตนเอง'],[65,'8.7','ท่านสุขภาพแข็งแรงไม่มีโรคภัยที่ต้องไปรับการรักษาเป็นประจำ'],[66,'8.8','ท่านมีความสุขที่ได้เริ่มทำอะไรใหม่ๆ'],[67,'8.9','ท่านมีเวลาพักผ่อนคลายเครียด'],[68,'8.10','ท่านมีความมุ่งมั่นที่จะทำงาน'],[69,'8.11','ท่านมีความก้าวหน้าในชีวิตการทำงาน'],[70,'8.12','ท่านมีสัมพันธภาพที่ดีกับผู้อื่นและเพื่อนบ้าน'],[71,'8.13','ท่านสามารถเผชิญกับเหตุการณ์ร้ายแรงได้'],[72,'8.14','ท่านมีผู้ช่วยเหลือยามที่ต้องการ'],[73,'8.15','ท่านรู้สึกปลอดภัยในชีวิตและทรัพย์สิน']]}
 ];
 
-/* ── BUILD LIKERT ── */
+/* ── 4. BUILD LIKERT QUESTIONS ── */
 var ANS = {};
 function buildLikert(qid, parent) {
   var d = document.createElement('div');
@@ -1285,324 +1254,230 @@ function buildSec(qs, contId) {
     buildLikert(qs[i][0], b); c.appendChild(b);
   }
 }
-for (var si = 0; si < SECS.length; si++) buildSec(SECS[si].qs, SECS[si].cont);
+for (var si = 0; si < SECS.length; si++) { buildSec(SECS[si].qs, SECS[si].cont); }
 buildLikert(0, document.getElementById('q-ov'));
 
-/* ── UPDATE PROGRESS DOTS ── */
+/* ── 5. DEPT → UNIT DROPDOWN ── */
+document.getElementById('d-dept').addEventListener('change', function() {
+  var dept = this.value;
+  var sel  = document.getElementById('d-unit');
+  sel.innerHTML = '';
+  if (!dept) { sel.innerHTML = '<option value="">— เลือกงานก่อน —</option>'; return; }
+  var units = UNIT_MAP[dept] || [];
+  var html  = '<option value="">— กรุณาเลือก —</option>';
+  for (var i = 0; i < units.length; i++) {
+    html += '<option value="' + units[i] + '">' + units[i] + '</option>';
+  }
+  sel.innerHTML = html;
+});
+
+/* ── 6. PROGRESS DOTS ── */
 function updateDots(n) {
   for (var i = 1; i <= 4; i++) {
     var d = document.getElementById('pd' + i);
-    d.className = 'prog-dot';
-    if (i < n)  d.className = 'prog-dot done';
-    if (i === n) d.className = 'prog-dot cur';
+    if (!d) continue;
+    d.className = 'prog-dot' + (i < n ? ' done' : (i === n ? ' cur' : ''));
   }
 }
 
-/* ── SHOW/HIDE ERROR ── */
+/* ── 7. ERROR DISPLAY ── */
 function showErr(msg) {
   var el = document.getElementById('err');
   document.getElementById('err-msg').textContent = msg;
-  el.classList.remove('hidden');
-  el.style.display = 'flex';
+  el.classList.remove('hidden'); el.style.display = 'flex';
   el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 function hideErr() {
-  document.getElementById('err').classList.add('hidden');
-  document.getElementById('err').style.display = 'none';
+  var el = document.getElementById('err');
+  el.classList.add('hidden'); el.style.display = 'none';
 }
 
-/* ── STEP NAVIGATION ── */
+/* ── 8. STEP NAVIGATION ── */
 var curStep = 1;
 function goStep(n) {
   hideErr();
   if (n === 2) {
-    if (!document.getElementById('d-dept').value || !document.getElementById('d-unit').value ||
-        !document.getElementById('d-pos').value  || !document.getElementById('d-age').value  ||
+    if (!document.getElementById('d-dept').value ||
+        !document.getElementById('d-unit').value ||
+        !document.getElementById('d-pos').value  ||
+        !document.getElementById('d-age').value  ||
         !document.getElementById('d-exp').value) {
       showErr('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน'); return;
     }
   }
   if (n === 3) {
-    var ids3 = []; var si;
-    for (si = 0; si < SECS.length; si++) if (SECS[si].id <= 3) for (var qi = 0; qi < SECS[si].qs.length; qi++) ids3.push(SECS[si].qs[qi][0]);
-    var miss3 = ids3.filter(function(id) { return !ANS[id]; });
+    var ids3 = []; var si3;
+    for (si3 = 0; si3 < SECS.length; si3++) {
+      if (SECS[si3].id <= 3) { for (var qi3 = 0; qi3 < SECS[si3].qs.length; qi3++) ids3.push(SECS[si3].qs[qi3][0]); }
+    }
+    var miss3 = ids3.filter(function(id){ return !ANS[id]; });
     if (miss3.length) { showErr('กรุณาตอบให้ครบทุกข้อ (ยังขาดอีก ' + miss3.length + ' ข้อ)'); return; }
   }
   if (n === 4) {
-    var ids4 = []; var si;
-    for (si = 0; si < SECS.length; si++) if (SECS[si].id >= 4 && SECS[si].id <= 6) for (var qi = 0; qi < SECS[si].qs.length; qi++) ids4.push(SECS[si].qs[qi][0]);
-    var miss4 = ids4.filter(function(id) { return !ANS[id]; });
+    var ids4 = []; var si4;
+    for (si4 = 0; si4 < SECS.length; si4++) {
+      if (SECS[si4].id >= 4 && SECS[si4].id <= 6) { for (var qi4 = 0; qi4 < SECS[si4].qs.length; qi4++) ids4.push(SECS[si4].qs[qi4][0]); }
+    }
+    var miss4 = ids4.filter(function(id){ return !ANS[id]; });
     if (miss4.length) { showErr('กรุณาตอบให้ครบทุกข้อ (ยังขาดอีก ' + miss4.length + ' ข้อ)'); return; }
   }
   document.getElementById('s' + curStep).style.display = 'none';
   curStep = n;
   document.getElementById('s' + n).style.display = 'block';
-  var pct = Math.round(n / 4 * 100);
+  var pct  = Math.round(n / 4 * 100);
   document.getElementById('prog').style.width = pct + '%';
   document.getElementById('step-pct').textContent = pct + '%';
   var labs = ['ข้อมูลทั่วไป','ด้านการบังคับบัญชา · ลักษณะงาน · ความก้าวหน้า','ด้านสัมพันธภาพ · ค่าตอบแทน · สิ่งแวดล้อม','ด้านความยึดมั่นผูกพัน · ความสุขของบุคลากร'];
   document.getElementById('step-label').textContent = 'ขั้นตอนที่ ' + n + ' / 4 — ' + labs[n - 1];
   updateDots(n);
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
-/* ── GOOGLE SHEETS CONFIG ──
-   วิธีเชื่อมต่อ:
-   1. เปิด Google Sheet ที่ต้องการบันทึก
-   2. ไปที่ Extensions > Apps Script
-   3. วาง code จาก doPost() ด้านล่างนี้ แล้ว Deploy > New deployment > Web app
-   4. Copy URL ที่ได้ มาใส่ใน GS_URL ด้านล่าง
-*/
-var GS_URL = 'https://script.google.com/macros/s/AKfycbznsTjy5eh4PY2p9z_K7XFDm6eg3-PYPDapH57qs8xNAaTg5g2mMKzgDGFJjJNR3_A/exec';
-/* ═══════════════════════════════════════════════════════════
-   Apps Script code (เวอร์ชันใหม่ รับ GET + POST):
-   Extensions > Apps Script > ลบ code เดิมทิ้ง > วาง code นี้ > Deploy ใหม่
-   ═══════════════════════════════════════════════════════════
-
-function setupHeaders(sheet) {
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'วันที่-เวลา','ปีงบประมาณ','งานการพยาบาล','หน่วยงาน','ตำแหน่ง',
-      'อายุ','เพศ','สถานภาพ','ภูมิลำเนา','วุฒิการศึกษา',
-      'ประสบการณ์','สถานภาพงาน','ที่อยู่อาศัย',
-      'คะแนนพึงพอใจ','คะแนนยึดมั่น','คะแนนสุข','คะแนนรวม',
-      'ข้อเสนอ:บังคับบัญชา','ข้อเสนอ:ลักษณะงาน','ข้อเสนอ:ก้าวหน้า',
-      'ข้อเสนอ:สัมพันธภาพ','ข้อเสนอ:ค่าตอบแทน','ข้อเสนอ:สิ่งแวดล้อม'
-    ]);
-    sheet.getRange(1,1,1,23).setBackground('#1558A0')
-         .setFontColor('#FFFFFF').setFontWeight('bold');
-    sheet.setFrozenRows(1);
-  }
-}
-function saveRow(sheet, d) {
-  sheet.appendRow([
-    new Date(), d.year, d.dept, d.unit, d.pos,
-    d.age, d.gender, d.status, d.region, d.edu,
-    d.exp, d.emptype, d.housing,
-    d.sat, d.eng, d.hap, d.overall,
-    d.t1||'', d.t2||'', d.t3||'', d.t4||'', d.t5||'', d.t6||''
-  ]);
-}
-function getSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  return ss.getSheetByName('แบบสอบถาม') || ss.getActiveSheet();
-}
-/* รับข้อมูลแบบ GET (no-cors จาก browser) */
-function doGet(e) {
-  try {
-    var p = e.parameter;
-    if (!p.year) {
-      return ContentService.createTextOutput(
-        JSON.stringify({status:'ready'})
-      ).setMimeType(ContentService.MimeType.JSON);
-    }
-    var sheet = getSheet();
-    setupHeaders(sheet);
-    saveRow(sheet, p);
-    return ContentService.createTextOutput(
-      JSON.stringify({result:'ok', rows: sheet.getLastRow()})
-    ).setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(
-      JSON.stringify({result:'error', msg: err.toString()})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-/* รับข้อมูลแบบ POST (fallback) */
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var sheet = getSheet();
-    setupHeaders(sheet);
-    saveRow(sheet, data);
-    return ContentService.createTextOutput(
-      JSON.stringify({result:'ok', rows: sheet.getLastRow()})
-    ).setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(
-      JSON.stringify({result:'error', msg: err.toString()})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-   ═══════════════════════════════════════════════════════════ */
+/* ── 9. COLLECT FORM DATA ── */
 function collectData() {
-  var satKeys = ['s1','s2','s3','s4','s5','s6'];
-  var satSum = 0; var satN = 0;
-  var si, qi;
+  var satSum = 0; var satN = 0; var si;
   for (si = 0; si < SECS.length; si++) {
-    if (SECS[si].id <= 6) {
-      for (qi = 0; qi < SECS[si].qs.length; qi++) {
-        var v = ANS[SECS[si].qs[qi][0]]; if(v) { satSum += v; satN++; }
-      }
-    }
+    if (SECS[si].id <= 6) { for (var qi = 0; qi < SECS[si].qs.length; qi++) { var v = ANS[SECS[si].qs[qi][0]]; if (v) { satSum += v; satN++; } } }
   }
   var engSum = 0; var engN = 0;
   for (si = 0; si < SECS.length; si++) {
-    if (SECS[si].id === 7) {
-      for (qi = 0; qi < SECS[si].qs.length; qi++) {
-        var v2 = ANS[SECS[si].qs[qi][0]]; if(v2) { engSum += v2; engN++; }
-      }
-    }
+    if (SECS[si].id === 7) { for (var qi2 = 0; qi2 < SECS[si].qs.length; qi2++) { var v2 = ANS[SECS[si].qs[qi2][0]]; if (v2) { engSum += v2; engN++; } } }
   }
   var hapSum = 0; var hapN = 0;
   for (si = 0; si < SECS.length; si++) {
-    if (SECS[si].id === 8) {
-      for (qi = 0; qi < SECS[si].qs.length; qi++) {
-        var v3 = ANS[SECS[si].qs[qi][0]]; if(v3) { hapSum += v3; hapN++; }
-      }
-    }
+    if (SECS[si].id === 8) { for (var qi3 = 0; qi3 < SECS[si].qs.length; qi3++) { var v3 = ANS[SECS[si].qs[qi3][0]]; if (v3) { hapSum += v3; hapN++; } } }
   }
-  var satAvgVal  = satN  ? +(satSum/satN).toFixed(3)  : 0;
-  var engAvgVal  = engN  ? +(engSum/engN).toFixed(3)  : 0;
-  var hapAvgVal  = hapN  ? +(hapSum/hapN).toFixed(3)  : 0;
-  var ovAvgVal   = +((satAvgVal+engAvgVal+hapAvgVal)/3).toFixed(3);
+  var sat = satN ? +(satSum/satN).toFixed(3) : 0;
+  var eng = engN ? +(engSum/engN).toFixed(3) : 0;
+  var hap = hapN ? +(hapSum/hapN).toFixed(3) : 0;
+  var deptSel = document.getElementById('d-dept');
   return {
-    year:     2569,
-    dept:     document.getElementById('d-dept').options[document.getElementById('d-dept').selectedIndex].text,
-    unit:     document.getElementById('d-unit').value,
-    pos:      document.getElementById('d-pos').value,
-    age:      document.getElementById('d-age').value,
-    gender:   document.getElementById('d-gender').value,
-    status:   document.getElementById('d-status').value,
-    region:   document.getElementById('d-region').value,
-    edu:      document.getElementById('d-edu').value,
-    exp:      document.getElementById('d-exp').value,
-    emptype:  document.getElementById('d-emptype').value,
-    housing:  document.getElementById('d-housing').value,
-    sat:      satAvgVal,
-    eng:      engAvgVal,
-    hap:      hapAvgVal,
-    overall:  ovAvgVal,
-    t1: document.getElementById('t1').value,
-    t2: document.getElementById('t2').value,
-    t3: document.getElementById('t3').value,
-    t4: document.getElementById('t4').value,
-    t5: document.getElementById('t5').value,
-    t6: document.getElementById('t6').value
+    year:2569,
+    dept:    deptSel.options[deptSel.selectedIndex] ? deptSel.options[deptSel.selectedIndex].text : '',
+    unit:    document.getElementById('d-unit').value,
+    pos:     document.getElementById('d-pos').value,
+    age:     document.getElementById('d-age').value,
+    gender:  document.getElementById('d-gender').value,
+    status:  document.getElementById('d-status').value,
+    region:  document.getElementById('d-region').value,
+    edu:     document.getElementById('d-edu').value,
+    exp:     document.getElementById('d-exp').value,
+    emptype: document.getElementById('d-emptype').value,
+    housing: document.getElementById('d-housing').value,
+    sat:sat, eng:eng, hap:hap,
+    overall: +((sat+eng+hap)/3).toFixed(3),
+    t1:document.getElementById('t1').value,
+    t2:document.getElementById('t2').value,
+    t3:document.getElementById('t3').value,
+    t4:document.getElementById('t4').value,
+    t5:document.getElementById('t5').value,
+    t6:document.getElementById('t6').value
   };
 }
+
+/* ── 10. SUBMIT SURVEY → GOOGLE SHEETS ── */
 function submitSurvey() {
   var ids = []; var si;
-  for (si = 0; si < SECS.length; si++) if (SECS[si].id >= 7) for (var qi = 0; qi < SECS[si].qs.length; qi++) ids.push(SECS[si].qs[qi][0]);
+  for (si = 0; si < SECS.length; si++) {
+    if (SECS[si].id >= 7) { for (var qi = 0; qi < SECS[si].qs.length; qi++) ids.push(SECS[si].qs[qi][0]); }
+  }
   ids.push(0);
-  var miss = ids.filter(function(id) { return !ANS[id]; });
+  var miss = ids.filter(function(id){ return !ANS[id]; });
   if (miss.length) { showErr('กรุณาตอบให้ครบทุกข้อ (ยังขาดอีก ' + miss.length + ' ข้อ)'); return; }
   var payload = collectData();
-  /* แสดงหน้า thanks ก่อน แล้วค่อยส่ง */
   document.getElementById('survey-form').style.display = 'none';
-  document.getElementById('thanks').style.display = 'block';
-  window.scrollTo({top: 0, behavior: 'smooth'});
-  /* ส่งข้อมูลไป Google Sheets ด้วย no-cors fetch */
+  document.getElementById('thanks').style.display      = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+  var statusEl = document.getElementById('thanks-save-status');
+  if (statusEl) statusEl.innerHTML = '<span style="color:#636E82;font-size:13px;">⏳ กำลังบันทึก...</span>';
   if (GS_URL && GS_URL.indexOf('script.google.com') !== -1) {
-    var statusEl = document.getElementById('thanks-save-status');
-    if (statusEl) statusEl.innerHTML = '<span style="color:#636E82;font-size:13px;">⏳ กำลังบันทึก...</span>';
-    /* ใช้ no-cors เพราะ Apps Script ไม่ส่ง CORS header กลับมา */
-    /* วิธีนี้ข้อมูลจะถูกส่งสำเร็จ แต่ browser จะไม่รับ response (เป็นปกติ) */
-    var formData = new FormData();
-    formData.append('data', JSON.stringify(payload));
-    /* ลองด้วย Image trick — ส่ง GET แบบ encoded (backup method) */
-    var queryStr = '?year=' + encodeURIComponent(payload.year)
-      + '&dept='    + encodeURIComponent(payload.dept)
-      + '&unit='    + encodeURIComponent(payload.unit)
-      + '&pos='     + encodeURIComponent(payload.pos)
-      + '&age='     + encodeURIComponent(payload.age)
-      + '&gender='  + encodeURIComponent(payload.gender)
-      + '&status='  + encodeURIComponent(payload.status)
-      + '&region='  + encodeURIComponent(payload.region)
-      + '&edu='     + encodeURIComponent(payload.edu)
-      + '&exp='     + encodeURIComponent(payload.exp)
-      + '&emptype=' + encodeURIComponent(payload.emptype)
-      + '&housing=' + encodeURIComponent(payload.housing)
-      + '&sat='     + payload.sat
-      + '&eng='     + payload.eng
-      + '&hap='     + payload.hap
-      + '&overall=' + payload.overall
-      + '&t1='      + encodeURIComponent(payload.t1||'')
-      + '&t2='      + encodeURIComponent(payload.t2||'')
-      + '&t3='      + encodeURIComponent(payload.t3||'')
-      + '&t4='      + encodeURIComponent(payload.t4||'')
-      + '&t5='      + encodeURIComponent(payload.t5||'')
-      + '&t6='      + encodeURIComponent(payload.t6||'');
-    fetch(GS_URL + queryStr, { method: 'GET', mode: 'no-cors' })
+    var qs = '?year='    + encodeURIComponent(payload.year)
+           + '&dept='    + encodeURIComponent(payload.dept)
+           + '&unit='    + encodeURIComponent(payload.unit)
+           + '&pos='     + encodeURIComponent(payload.pos)
+           + '&age='     + encodeURIComponent(payload.age)
+           + '&gender='  + encodeURIComponent(payload.gender)
+           + '&status='  + encodeURIComponent(payload.status)
+           + '&region='  + encodeURIComponent(payload.region)
+           + '&edu='     + encodeURIComponent(payload.edu)
+           + '&exp='     + encodeURIComponent(payload.exp)
+           + '&emptype=' + encodeURIComponent(payload.emptype)
+           + '&housing=' + encodeURIComponent(payload.housing)
+           + '&sat='     + payload.sat
+           + '&eng='     + payload.eng
+           + '&hap='     + payload.hap
+           + '&overall=' + payload.overall
+           + '&t1='      + encodeURIComponent(payload.t1||'')
+           + '&t2='      + encodeURIComponent(payload.t2||'')
+           + '&t3='      + encodeURIComponent(payload.t3||'')
+           + '&t4='      + encodeURIComponent(payload.t4||'')
+           + '&t5='      + encodeURIComponent(payload.t5||'')
+           + '&t6='      + encodeURIComponent(payload.t6||'');
+    fetch(GS_URL + qs, {method:'GET', mode:'no-cors'})
       .then(function() {
         if (statusEl) statusEl.innerHTML = '<span style="color:#2A7A28;font-size:13px;font-weight:600;">✅ บันทึกลง Google Sheets สำเร็จ</span>';
       })
       .catch(function() {
-        /* no-cors มักจะ catch ไม่ได้ ถือว่าส่งได้ */
         if (statusEl) statusEl.innerHTML = '<span style="color:#2A7A28;font-size:13px;font-weight:600;">✅ บันทึกลง Google Sheets สำเร็จ</span>';
       });
+  } else {
+    if (statusEl) statusEl.innerHTML = '<span style="color:#C0302E;font-size:13px;">⚠️ ยังไม่ได้เชื่อมต่อ Google Sheets</span>';
   }
 }
 
+/* ── 11. RESET SURVEY ── */
 function resetSurvey() {
   ANS = {};
-  document.querySelectorAll('input[type=radio]').forEach(function(r) { r.checked = false; });
-  document.querySelectorAll('textarea').forEach(function(t) { t.value = ''; });
+  document.querySelectorAll('input[type=radio]').forEach(function(r){ r.checked = false; });
+  document.querySelectorAll('textarea').forEach(function(t){ t.value = ''; });
   document.getElementById('survey-form').style.display = 'block';
-  document.getElementById('thanks').style.display = 'none';
+  document.getElementById('thanks').style.display      = 'none';
   for (var i = 2; i <= 4; i++) document.getElementById('s' + i).style.display = 'none';
   document.getElementById('s1').style.display = 'block';
   curStep = 1;
   document.getElementById('prog').style.width = '25%';
-  document.getElementById('step-pct').textContent = '25%';
-  document.getElementById('step-label').textContent = 'ขั้นตอนที่ 1 / 4 — ข้อมูลทั่วไป';
+  document.getElementById('step-pct').textContent     = '25%';
+  document.getElementById('step-label').textContent   = 'ขั้นตอนที่ 1 / 4 — ข้อมูลทั่วไป';
   updateDots(1); hideErr();
   document.getElementById('d-dept').value = '';
   document.getElementById('d-unit').innerHTML = '<option value="">— เลือกงานก่อน —</option>';
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
-function returnToLandingFromSurvey() {
-  resetSurvey();
-  goBackToLanding();
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
-/* ── PAGE ROUTING ── */
-/* ── MODE MANAGEMENT ── */
-var appMode = ''; /* 'survey' or 'dash' */
-
+/* ── 12. APP MODE (LANDING → SURVEY or DASHBOARD) ── */
+var appMode = '';
 function enterApp(mode) {
   appMode = mode;
-  /* Hide landing */
-  document.getElementById('page-landing').style.display = 'none';
-  /* Show topbar */
-  document.getElementById('main-topbar').style.display = 'flex';
-  /* Show GS banner only in dash mode if not configured */
-  if (mode === 'dash' && (!GS_URL || GS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE')) {
-    document.getElementById('gs-setup-banner').style.display = 'flex';
-  }
-  /* Hide all pages first */
+  document.getElementById('page-landing').classList.remove('show');
+  document.getElementById('main-topbar').style.display  = 'flex';
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   if (mode === 'survey') {
-    /* Show ONLY survey tab-bar */
     document.getElementById('tabs-survey').style.display = 'flex';
     document.getElementById('tabs-dash').style.display   = 'none';
-    /* Show survey page */
     document.getElementById('page-survey').classList.add('active');
   } else {
-    /* Show ONLY dashboard tab-bar */
     document.getElementById('tabs-survey').style.display = 'none';
     document.getElementById('tabs-dash').style.display   = 'flex';
-    /* Show overview page */
     document.getElementById('page-overview').classList.add('active');
-    if (!CI.ov) initOverview();
-    /* Set first dash tab active */
     var dTabs = document.querySelectorAll('#tabs-dash .tab');
     dTabs.forEach(function(t){ t.classList.remove('active'); });
     if (dTabs[0]) dTabs[0].classList.add('active');
+    if (!CI.ov) initOverview();
   }
+  if (!GS_URL || GS_URL.indexOf('script.google.com') === -1) {
+    document.getElementById('gs-setup-banner').style.display = 'flex';
+  }
+  window.scrollTo({top:0, behavior:'instant'});
 }
-
 function goBackToLanding() {
-  document.getElementById('main-topbar').style.display = 'none';
-  document.getElementById('tabs-survey').style.display = 'none';
-  document.getElementById('tabs-dash').style.display   = 'none';
+  document.getElementById('main-topbar').style.display  = 'none';
+  document.getElementById('tabs-survey').style.display  = 'none';
+  document.getElementById('tabs-dash').style.display    = 'none';
   document.getElementById('gs-setup-banner').style.display = 'none';
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  document.getElementById('page-landing').style.display = 'flex';
+  document.getElementById('page-landing').classList.add('show');
   appMode = '';
 }
-
 function gotoPageDash(name, el) {
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('#tabs-dash .tab').forEach(function(t){ t.classList.remove('active'); });
@@ -1613,12 +1488,37 @@ function gotoPageDash(name, el) {
   if (name === 'analysis' && !CI.an) initAnalysis();
 }
 
-/* Legacy - not used but kept for safety */
-function gotoPageByName(name, el) { gotoPageDash(name, el); }
-function gotoPage(name, el) { gotoPageDash(name, el); }
+/* ── 13. GOOGLE SHEETS URL SAVE/LOAD ── */
+function saveGSUrl() {
+  var url = document.getElementById('gs-url-input').value.trim();
+  if (!url) { alert('กรุณาวาง URL ของ Google Apps Script'); return; }
+  GS_URL = url;
+  try { localStorage.setItem('GS_URL_NURSING', url); } catch(e) {}
+  document.getElementById('gs-setup-banner').style.display = 'none';
+  var lbl = document.getElementById('gs-status-landing');
+  if (lbl) lbl.innerHTML = '<span class="gs-ok-badge">✅ เชื่อมต่อ Google Sheets แล้ว</span>';
+  var notice = document.createElement('div');
+  notice.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#2A7A28;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+  notice.textContent = '✅ บันทึก Google Sheets URL สำเร็จ';
+  document.body.appendChild(notice);
+  setTimeout(function(){ notice.remove(); }, 3000);
+}
+function loadGSUrl() {
+  try {
+    var saved = localStorage.getItem('GS_URL_NURSING');
+    if (saved) {
+      GS_URL = saved;
+      var inp = document.getElementById('gs-url-input');
+      if (inp) inp.value = saved;
+      document.getElementById('gs-setup-banner').style.display = 'none';
+      var lbl = document.getElementById('gs-status-landing');
+      if (lbl) lbl.innerHTML = '<span class="gs-ok-badge">✅ เชื่อมต่อ Google Sheets แล้ว</span>';
+    }
+  } catch(e) {}
+}
+window.addEventListener('load', loadGSUrl);
 
-/* ── DEMO DATA ── */
-/* ── HISTORICAL DATA (ปี 2562-2569) ── */
+/* ── 14. HISTORICAL DATA ── */
 var YEARS = [2562,2563,2564,2565,2566,2567,2568,2569];
 var YEAR_DATA = {
   2562:{sat:3.72,eng:3.68,hap:3.70,pctSat:58,pctEng:55,pctHap:57,n:198},
@@ -1630,157 +1530,85 @@ var YEAR_DATA = {
   2568:{sat:4.08,eng:4.02,hap:4.05,pctSat:80,pctEng:77,pctHap:79,n:240},
   2569:{sat:4.13,eng:4.07,hap:4.10,pctSat:83,pctEng:80,pctHap:82,n:249}
 };
-
 var DL = ['ผู้ป่วยนอก','ผู้ป่วยใน','ผู้ป่วยวิกฤต','วิสัญญี','ผ่าตัด/คลอด','ประสานงาน','อุบัติเหตุ/ฉุกเฉิน','บริหาร'];
-/* ข้อมูลรายงาน แยกตามปี */
 var DEPT_YEAR = {
-  2569:{
-    'ผู้ป่วยนอก':  {n:45,s1:4.1,s2:4.2,s3:3.9,s4:4.3,s5:3.6,s6:4.0,eng:4.0,hap:4.1},
-    'ผู้ป่วยใน':   {n:62,s1:3.9,s2:4.0,s3:3.8,s4:4.1,s5:3.5,s6:3.9,eng:3.8,hap:3.9},
-    'ผู้ป่วยวิกฤต':{n:38,s1:4.2,s2:4.1,s3:4.0,s4:4.4,s5:3.7,s6:4.1,eng:4.1,hap:4.3},
-    'วิสัญญี':    {n:18,s1:4.3,s2:4.3,s3:4.1,s4:4.5,s5:3.8,s6:4.2,eng:4.2,hap:4.4},
-    'ผ่าตัด/คลอด':{n:28,s1:4.0,s2:3.9,s3:3.8,s4:4.2,s5:3.6,s6:4.0,eng:3.9,hap:4.0},
-    'ประสานงาน':  {n:14,s1:4.1,s2:4.1,s3:3.9,s4:4.3,s5:3.7,s6:4.1,eng:4.0,hap:4.2},
-    'อุบัติเหตุ/ฉุกเฉิน':{n:32,s1:3.7,s2:3.8,s3:3.7,s4:4.0,s5:3.4,s6:3.7,eng:3.6,hap:3.7},
-    'บริหาร':     {n:12,s1:4.4,s2:4.3,s3:4.2,s4:4.5,s5:4.0,s6:4.3,eng:4.3,hap:4.4}
-  },
-  2568:{
-    'ผู้ป่วยนอก':  {n:43,s1:4.0,s2:4.1,s3:3.8,s4:4.2,s5:3.5,s6:3.9,eng:3.9,hap:4.0},
-    'ผู้ป่วยใน':   {n:60,s1:3.8,s2:3.9,s3:3.7,s4:4.0,s5:3.4,s6:3.8,eng:3.7,hap:3.8},
-    'ผู้ป่วยวิกฤต':{n:36,s1:4.1,s2:4.0,s3:3.9,s4:4.3,s5:3.6,s6:4.0,eng:4.0,hap:4.2},
-    'วิสัญญี':    {n:17,s1:4.2,s2:4.2,s3:4.0,s4:4.4,s5:3.7,s6:4.1,eng:4.1,hap:4.3},
-    'ผ่าตัด/คลอด':{n:27,s1:3.9,s2:3.8,s3:3.7,s4:4.1,s5:3.5,s6:3.9,eng:3.8,hap:3.9},
-    'ประสานงาน':  {n:13,s1:4.0,s2:4.0,s3:3.8,s4:4.2,s5:3.6,s6:4.0,eng:3.9,hap:4.1},
-    'อุบัติเหตุ/ฉุกเฉิน':{n:31,s1:3.6,s2:3.7,s3:3.6,s4:3.9,s5:3.3,s6:3.6,eng:3.5,hap:3.6},
-    'บริหาร':     {n:11,s1:4.3,s2:4.2,s3:4.1,s4:4.4,s5:3.9,s6:4.2,eng:4.2,hap:4.3}
-  }
+  2569:{'ผู้ป่วยนอก':{n:45,s1:4.1,s2:4.2,s3:3.9,s4:4.3,s5:3.6,s6:4.0,eng:4.0,hap:4.1},'ผู้ป่วยใน':{n:62,s1:3.9,s2:4.0,s3:3.8,s4:4.1,s5:3.5,s6:3.9,eng:3.8,hap:3.9},'ผู้ป่วยวิกฤต':{n:38,s1:4.2,s2:4.1,s3:4.0,s4:4.4,s5:3.7,s6:4.1,eng:4.1,hap:4.3},'วิสัญญี':{n:18,s1:4.3,s2:4.3,s3:4.1,s4:4.5,s5:3.8,s6:4.2,eng:4.2,hap:4.4},'ผ่าตัด/คลอด':{n:28,s1:4.0,s2:3.9,s3:3.8,s4:4.2,s5:3.6,s6:4.0,eng:3.9,hap:4.0},'ประสานงาน':{n:14,s1:4.1,s2:4.1,s3:3.9,s4:4.3,s5:3.7,s6:4.1,eng:4.0,hap:4.2},'อุบัติเหตุ/ฉุกเฉิน':{n:32,s1:3.7,s2:3.8,s3:3.7,s4:4.0,s5:3.4,s6:3.7,eng:3.6,hap:3.7},'บริหาร':{n:12,s1:4.4,s2:4.3,s3:4.2,s4:4.5,s5:4.0,s6:4.3,eng:4.3,hap:4.4}},
+  2568:{'ผู้ป่วยนอก':{n:43,s1:4.0,s2:4.1,s3:3.8,s4:4.2,s5:3.5,s6:3.9,eng:3.9,hap:4.0},'ผู้ป่วยใน':{n:60,s1:3.8,s2:3.9,s3:3.7,s4:4.0,s5:3.4,s6:3.8,eng:3.7,hap:3.8},'ผู้ป่วยวิกฤต':{n:36,s1:4.1,s2:4.0,s3:3.9,s4:4.3,s5:3.6,s6:4.0,eng:4.0,hap:4.2},'วิสัญญี':{n:17,s1:4.2,s2:4.2,s3:4.0,s4:4.4,s5:3.7,s6:4.1,eng:4.1,hap:4.3},'ผ่าตัด/คลอด':{n:27,s1:3.9,s2:3.8,s3:3.7,s4:4.1,s5:3.5,s6:3.9,eng:3.8,hap:3.9},'ประสานงาน':{n:13,s1:4.0,s2:4.0,s3:3.8,s4:4.2,s5:3.6,s6:4.0,eng:3.9,hap:4.1},'อุบัติเหตุ/ฉุกเฉิน':{n:31,s1:3.6,s2:3.7,s3:3.6,s4:3.9,s5:3.3,s6:3.6,eng:3.5,hap:3.6},'บริหาร':{n:11,s1:4.3,s2:4.2,s3:4.1,s4:4.4,s5:3.9,s6:4.2,eng:4.2,hap:4.3}}
 };
-/* สำหรับปีที่ไม่มีข้อมูลรายงาน ใช้ข้อมูลปี 2568 */
-for(var y=2562;y<=2567;y++) DEPT_YEAR[y] = DEPT_YEAR[2568];
-
-var DCOLS=['#1558A0','#0A7B6C','#2B78D4','#B86C10','#C0302E','#5244B8','#2A7A28','#0A7B6C'];
-var CI={ov:false,bw:false,an:false};
+for (var yy = 2562; yy <= 2567; yy++) DEPT_YEAR[yy] = DEPT_YEAR[2568];
+var DCOLS = ['#1558A0','#0A7B6C','#2B78D4','#B86C10','#C0302E','#5244B8','#2A7A28','#0A7B6C'];
+var CI = {ov:false, bw:false, an:false};
 var curYear = 2569;
 var radarChart=null, trendChart=null, deptbarChart=null, pctTrendChart=null;
 
-function DD(){return DEPT_YEAR[curYear]||DEPT_YEAR[2569];}
-function tot(){var t=0,d=DD();for(var k in d)t+=d[k].n;return t;}
-function wAvg(key){var T=tot(),s=0,d=DD();for(var k in d)s+=d[k][key]*d[k].n;return s/T;}
-function satAvg(d){return(d.s1+d.s2+d.s3+d.s4+d.s5+d.s6)/6;}
-function overall(d){return(d.s1+d.s2+d.s3+d.s4+d.s5+d.s6+d.eng+d.hap)/8;}
-function lvl(v){return v>=4.2?'สูง':v>=3.7?'ปานกลาง':'ต้องพัฒนา';}
-function lc(v){return v>=4.2?'bhi':v>=3.7?'bmd':'blo';}
+function DDY(){ return DEPT_YEAR[curYear] || DEPT_YEAR[2569]; }
+function totY(){ var t=0,d=DDY(); for(var k in d) t+=d[k].n; return t; }
+function wAvgY(key){ var T=totY(),s=0,d=DDY(); for(var k in d) s+=d[k][key]*d[k].n; return s/T; }
+function satAvg(d){ return (d.s1+d.s2+d.s3+d.s4+d.s5+d.s6)/6; }
+function overall(d){ return (d.s1+d.s2+d.s3+d.s4+d.s5+d.s6+d.eng+d.hap)/8; }
+function lvl(v){ return v>=4.2?'สูง':v>=3.7?'ปานกลาง':'ต้องพัฒนา'; }
+function lc(v){ return v>=4.2?'bhi':v>=3.7?'bmd':'blo'; }
 
-/* draw SVG ring */
 function drawRing(elId, pct, color) {
-  var el = document.getElementById(elId);
-  if(!el) return;
-  var r = 36; var circ = 2*Math.PI*r;
-  var offset = circ*(1-pct/100);
-  el.innerHTML =
-    '<svg width="90" height="90" viewBox="0 0 90 90">' +
-    '<circle class="ring-bg" cx="45" cy="45" r="'+r+'"/>' +
-    '<circle class="ring-fill" cx="45" cy="45" r="'+r+'" stroke="'+color+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/>' +
-    '</svg>' +
-    '<div class="pct-ring-inner"><div class="pct-val" style="color:'+color+'">'+pct+'%</div><div class="pct-sub">ระดับดี</div></div>';
+  var el = document.getElementById(elId); if(!el) return;
+  var r=36, circ=2*Math.PI*r, offset=circ*(1-pct/100);
+  el.innerHTML='<svg width="90" height="90" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="'+r+'"/><circle class="ring-fill" cx="45" cy="45" r="'+r+'" stroke="'+color+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/></svg><div class="pct-ring-inner"><div class="pct-val" style="color:'+color+'">'+pct+'%</div><div class="pct-sub">ระดับดี</div></div>';
 }
 
 function switchYear(yr, el) {
   curYear = yr;
-  document.querySelectorAll('.ytab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.ytab').forEach(function(b){ b.classList.remove('active'); });
   el.classList.add('active');
   document.getElementById('year-label').textContent = 'แสดงข้อมูลปี ' + yr;
   document.getElementById('dept-year-lbl').textContent = yr;
   renderOverviewCharts();
 }
 
-function renderOverviewCharts(){
-  var yd = YEAR_DATA[curYear];
-  var sa = yd.sat.toFixed(2);
-  var en = yd.eng.toFixed(2);
-  var ha = yd.hap.toFixed(2);
-  var ov = (((+sa)+(+en)+(+ha))/3).toFixed(2);
-  var T  = yd.n;
-
-  /* KPI metrics */
+function renderOverviewCharts() {
+  var yd=YEAR_DATA[curYear];
+  var sa=yd.sat.toFixed(2), en=yd.eng.toFixed(2), ha=yd.hap.toFixed(2);
+  var ov=(((+sa)+(+en)+(+ha))/3).toFixed(2);
   document.getElementById('ov-metrics').innerHTML=
-    '<div class="metric"><div class="metric-val" style="color:var(--blue)">'+T+'</div><div class="metric-lbl">ผู้ตอบ<br>แบบสอบถาม</div></div>'+
+    '<div class="metric"><div class="metric-val" style="color:var(--blue)">'+yd.n+'</div><div class="metric-lbl">ผู้ตอบ<br>แบบสอบถาม</div></div>'+
     '<div class="metric"><div class="metric-val" style="color:var(--teal)">'+sa+'</div><div class="metric-lbl">ความพึงพอใจ<br>(6 ด้าน)</div></div>'+
     '<div class="metric"><div class="metric-val" style="color:var(--amber)">'+en+'</div><div class="metric-lbl">ความยึดมั่น<br>ผูกพัน</div></div>'+
     '<div class="metric"><div class="metric-val" style="color:var(--purple)">'+ha+'</div><div class="metric-lbl">ความสุขของ<br>บุคลากร</div></div>'+
     '<div class="metric"><div class="metric-val">'+ov+'</div><div class="metric-lbl">คะแนนรวม<br>/ 5.00</div></div>'+
     '<div class="metric"><div class="metric-val" style="color:var(--green)">8</div><div class="metric-lbl">งานการ<br>พยาบาล</div></div>';
-
-  /* Percentage good level cards */
-  document.getElementById('pct-cards').innerHTML =
-    '<div class="pct-card"><div class="pct-lbl" style="color:#1558A0">💙 ความพึงพอใจ</div><div class="pct-ring" id="ring-sat"></div><div class="pct-desc">บุคลากรระดับดี (≥4)</div></div>' +
-    '<div class="pct-card"><div class="pct-lbl" style="color:#0A7B6C">💚 ความยึดมั่นผูกพัน</div><div class="pct-ring" id="ring-eng"></div><div class="pct-desc">บุคลากรระดับดี (≥4)</div></div>' +
-    '<div class="pct-card"><div class="pct-lbl" style="color:#5244B8">💜 ความสุข</div><div class="pct-ring" id="ring-hap"></div><div class="pct-desc">บุคลากรระดับดี (≥4)</div></div>';
-  setTimeout(function(){
-    drawRing('ring-sat', yd.pctSat, '#1558A0');
-    drawRing('ring-eng', yd.pctEng, '#0A7B6C');
-    drawRing('ring-hap', yd.pctHap, '#5244B8');
-  }, 50);
-
-  /* RADAR */
-  var rData=[wAvg('s1'),wAvg('s2'),wAvg('s3'),wAvg('s4'),wAvg('s5'),wAvg('s6'),wAvg('eng'),wAvg('hap')];
+  document.getElementById('pct-cards').innerHTML=
+    '<div class="pct-card"><div class="pct-lbl" style="color:#1558A0">💙 ความพึงพอใจ</div><div class="pct-ring" id="ring-sat"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>'+
+    '<div class="pct-card"><div class="pct-lbl" style="color:#0A7B6C">💚 ความยึดมั่นผูกพัน</div><div class="pct-ring" id="ring-eng"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>'+
+    '<div class="pct-card"><div class="pct-lbl" style="color:#5244B8">💜 ความสุข</div><div class="pct-ring" id="ring-hap"></div><div class="pct-desc">บุคลากรระดับดี (คะแนน ≥ 4)</div></div>';
+  setTimeout(function(){ drawRing('ring-sat',yd.pctSat,'#1558A0'); drawRing('ring-eng',yd.pctEng,'#0A7B6C'); drawRing('ring-hap',yd.pctHap,'#5244B8'); },50);
   if(radarChart){radarChart.destroy();}
-  radarChart=new Chart(document.getElementById('c-radar'),{type:'radar',data:{labels:['การบังคับบัญชา','ลักษณะงาน','ความก้าวหน้า','สัมพันธภาพ','ค่าตอบแทน','สิ่งแวดล้อม','ความยึดมั่น','ความสุข'],datasets:[{label:'คะแนน',data:rData,borderColor:'#1558A0',backgroundColor:'rgba(21,88,160,.15)',pointBackgroundColor:'#1558A0',borderWidth:2,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,ticks:{stepSize:1,backdropColor:'transparent',font:{size:10}},pointLabels:{font:{size:11},color:'#636E82'}}}}});
-
-  /* YEAR TREND */
-  var yLabels=YEARS.map(function(y){return ''+y;});
-  var ySat=YEARS.map(function(y){return YEAR_DATA[y].sat;});
-  var yEng=YEARS.map(function(y){return YEAR_DATA[y].eng;});
-  var yHap=YEARS.map(function(y){return YEAR_DATA[y].hap;});
+  radarChart=new Chart(document.getElementById('c-radar'),{type:'radar',data:{labels:['การบังคับบัญชา','ลักษณะงาน','ความก้าวหน้า','สัมพันธภาพ','ค่าตอบแทน','สิ่งแวดล้อม','ความยึดมั่น','ความสุข'],datasets:[{label:'คะแนน',data:[wAvgY('s1'),wAvgY('s2'),wAvgY('s3'),wAvgY('s4'),wAvgY('s5'),wAvgY('s6'),wAvgY('eng'),wAvgY('hap')],borderColor:'#1558A0',backgroundColor:'rgba(21,88,160,.15)',pointBackgroundColor:'#1558A0',borderWidth:2,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,ticks:{stepSize:1,backdropColor:'transparent',font:{size:10}},pointLabels:{font:{size:11},color:'#636E82'}}}}});
+  var yL=YEARS.map(function(y){return ''+y;});
   if(trendChart){trendChart.destroy();}
-  trendChart=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:yLabels,datasets:[
-    {label:'ความพึงพอใจ',data:ySat,borderColor:'#1558A0',tension:.4,fill:false,pointRadius:5,borderWidth:2.5,pointBackgroundColor:'#1558A0',pointBorderWidth:0},
-    {label:'ความยึดมั่น',data:yEng,borderColor:'#0A7B6C',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#0A7B6C',pointBorderWidth:0},
-    {label:'ความสุข',data:yHap,borderColor:'#5244B8',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[2,3],pointBackgroundColor:'#5244B8',pointBorderWidth:0}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2);}}}},scales:{y:{min:3.4,max:4.4,ticks:{stepSize:.1,font:{size:11}}},x:{ticks:{font:{size:11}}}}}});
-
-  /* DEPT BAR */
-  var d=DD();
+  trendChart=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:yL,datasets:[{label:'ความพึงพอใจ',data:YEARS.map(function(y){return YEAR_DATA[y].sat;}),borderColor:'#1558A0',tension:.4,fill:false,pointRadius:5,borderWidth:2.5,pointBackgroundColor:'#1558A0',pointBorderWidth:0},{label:'ความยึดมั่น',data:YEARS.map(function(y){return YEAR_DATA[y].eng;}),borderColor:'#0A7B6C',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#0A7B6C',pointBorderWidth:0},{label:'ความสุข',data:YEARS.map(function(y){return YEAR_DATA[y].hap;}),borderColor:'#5244B8',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[2,3],pointBackgroundColor:'#5244B8',pointBorderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3.4,max:4.4,ticks:{stepSize:.1,font:{size:11}}},x:{ticks:{font:{size:11}}}}}});
+  var dd=DDY();
   if(deptbarChart){deptbarChart.destroy();}
-  deptbarChart=new Chart(document.getElementById('c-deptbar'),{type:'bar',data:{labels:DL,datasets:[
-    {label:'ความพึงพอใจ',data:DL.map(function(k){return d[k]?+satAvg(d[k]).toFixed(2):0;}),backgroundColor:'#2B78D4',borderRadius:5},
-    {label:'ความยึดมั่น',data:DL.map(function(k){return d[k]?d[k].eng:0;}),backgroundColor:'#0A7B6C',borderRadius:5},
-    {label:'ความสุข',data:DL.map(function(k){return d[k]?d[k].hap:0;}),backgroundColor:'#5244B8',borderRadius:5}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3,max:5,ticks:{font:{size:11}}},x:{ticks:{font:{size:11},maxRotation:30}}}}});
-
-  /* PCT TREND (line) */
-  var pSat=YEARS.map(function(y){return YEAR_DATA[y].pctSat;});
-  var pEng=YEARS.map(function(y){return YEAR_DATA[y].pctEng;});
-  var pHap=YEARS.map(function(y){return YEAR_DATA[y].pctHap;});
+  deptbarChart=new Chart(document.getElementById('c-deptbar'),{type:'bar',data:{labels:DL,datasets:[{label:'ความพึงพอใจ',data:DL.map(function(k){return dd[k]?+satAvg(dd[k]).toFixed(2):0;}),backgroundColor:'#2B78D4',borderRadius:5},{label:'ความยึดมั่น',data:DL.map(function(k){return dd[k]?dd[k].eng:0;}),backgroundColor:'#0A7B6C',borderRadius:5},{label:'ความสุข',data:DL.map(function(k){return dd[k]?dd[k].hap:0;}),backgroundColor:'#5244B8',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3,max:5,ticks:{font:{size:11}}},x:{ticks:{font:{size:11},maxRotation:30}}}}});
   if(pctTrendChart){pctTrendChart.destroy();}
-  pctTrendChart=new Chart(document.getElementById('c-pct-trend'),{type:'line',data:{labels:yLabels,datasets:[
-    {label:'ความพึงพอใจ',data:pSat,borderColor:'#1558A0',tension:.4,fill:false,pointRadius:5,borderWidth:2.5,pointBackgroundColor:'#1558A0',pointBorderWidth:0},
-    {label:'ความยึดมั่น',data:pEng,borderColor:'#0A7B6C',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#0A7B6C',pointBorderWidth:0},
-    {label:'ความสุข',data:pHap,borderColor:'#5244B8',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[2,3],pointBackgroundColor:'#5244B8',pointBorderWidth:0}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y+'%';}}}},scales:{y:{min:40,max:100,ticks:{stepSize:10,font:{size:11},callback:function(v){return v+'%';}}},x:{ticks:{font:{size:11}}}}}});
+  pctTrendChart=new Chart(document.getElementById('c-pct-trend'),{type:'line',data:{labels:yL,datasets:[{label:'ความพึงพอใจ',data:YEARS.map(function(y){return YEAR_DATA[y].pctSat;}),borderColor:'#1558A0',tension:.4,fill:false,pointRadius:5,borderWidth:2.5,pointBackgroundColor:'#1558A0',pointBorderWidth:0},{label:'ความยึดมั่น',data:YEARS.map(function(y){return YEAR_DATA[y].pctEng;}),borderColor:'#0A7B6C',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#0A7B6C',pointBorderWidth:0},{label:'ความสุข',data:YEARS.map(function(y){return YEAR_DATA[y].pctHap;}),borderColor:'#5244B8',tension:.4,fill:false,pointRadius:5,borderWidth:2,borderDash:[2,3],pointBackgroundColor:'#5244B8',pointBorderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:40,max:100,ticks:{stepSize:10,font:{size:11},callback:function(v){return v+'%';}}},x:{ticks:{font:{size:11}}}}}});
 }
 
-function initOverview(){
-  CI.ov=true;
-  renderOverviewCharts();
-}
+function initOverview(){ CI.ov=true; renderOverviewCharts(); }
 
 var wdChart=null;
 function initByWard(){
   CI.bw=true;
   var c=document.getElementById('ward-btns');
   DL.forEach(function(d){
-    var xd=DD();
-    var x=xd[d]||{n:0,s1:0,s2:0,s3:0,s4:0,s5:0,s6:0,eng:0,hap:0};
+    var xd=DDY(); var x=xd[d]||{n:0,s1:0,s2:0,s3:0,s4:0,s5:0,s6:0,eng:0,hap:0};
     var avg=overall(x).toFixed(1);
     var btn=document.createElement('button'); btn.className='wb';
     btn.innerHTML='<div class="wbn">งาน'+d+'</div><div class="wbc">'+x.n+' คน · เฉลี่ย '+avg+'/5.0</div>';
-    btn.addEventListener('click',function(){document.querySelectorAll('.wb').forEach(function(b){b.classList.remove('sel');});btn.classList.add('sel');showWD(d);});
+    btn.addEventListener('click',function(){ document.querySelectorAll('.wb').forEach(function(b){b.classList.remove('sel');}); btn.classList.add('sel'); showWD(d); });
     c.appendChild(btn);
   });
 }
 function showWD(d){
-  var xd=DD(); var x=xd[d]||{n:0,s1:0,s2:0,s3:0,s4:0,s5:0,s6:0,eng:0,hap:0};
+  var xd=DDY(); var x=xd[d]||{n:0,s1:0,s2:0,s3:0,s4:0,s5:0,s6:0,eng:0,hap:0};
   var dims=[['การบังคับบัญชา',x.s1,'#1558A0'],['ลักษณะงาน',x.s2,'#0A7B6C'],['ความก้าวหน้า',x.s3,'#2B78D4'],['สัมพันธภาพ',x.s4,'#B86C10'],['ค่าตอบแทน',x.s5,'#C0302E'],['สิ่งแวดล้อม',x.s6,'#5244B8'],['ความยึดมั่นผูกพัน',x.eng,'#2A7A28'],['ความสุข',x.hap,'#0A7B6C']];
   var avg=overall(x);
   var html='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px"><div style="font-size:17px;font-weight:700">งาน'+d+'</div><div style="display:flex;gap:8px;align-items:center"><span class="badge '+lc(avg)+'">'+lvl(avg)+'</span><span style="font-size:12.5px;color:var(--g500)">ผู้ตอบ '+x.n+' คน</span></div></div><div class="metrics" style="margin-bottom:1rem">';
@@ -1798,7 +1626,7 @@ function showWD(d){
 
 function initAnalysis(){
   CI.an=true;
-  var xd=DD(); var T=tot();
+  var xd=DDY(); var T=totY();
   var dkeys=['s1','s2','s3','s4','s5','s6','eng','hap'];
   var dnames=['การบังคับบัญชา','ลักษณะงาน','ความก้าวหน้า','สัมพันธภาพ','ค่าตอบแทน','สิ่งแวดล้อม','ความยึดมั่น','ความสุข'];
   var davgs=dkeys.map(function(k){var s=0;for(var kk in xd)s+=xd[kk][k]*xd[kk].n;return +(s/T).toFixed(2);});
@@ -1807,7 +1635,7 @@ function initAnalysis(){
   var rows=DL.map(function(d){var x=xd[d]||{n:0,s1:0,s2:0,s3:0,s4:0,s5:0,s6:0,eng:0,hap:0};var avg=overall(x);return'<tr><td>งาน'+d+'</td><td>'+x.n+'</td><td>'+satAvg(x).toFixed(2)+'</td><td>'+x.eng.toFixed(2)+'</td><td>'+x.hap.toFixed(2)+'</td><td>'+avg.toFixed(2)+'</td><td><span class="badge '+lc(avg)+'">'+lvl(avg)+'</span></td></tr>';}).join('');
   document.getElementById('cmp-table').innerHTML='<table><thead><tr><th>งานการพยาบาล</th><th>N</th><th>ความพึงพอใจ</th><th>ความยึดมั่น</th><th>ความสุข</th><th>รวมเฉลี่ย</th><th>ระดับ</th></tr></thead><tbody>'+rows+'</tbody></table>';
   var sorted=DL.slice().sort(function(a,b){return overall(xd[b]||{})-overall(xd[a]||{});});
-  var top3=sorted.slice(0,3),bot3=sorted.slice(-3).reverse();
+  var top3=sorted.slice(0,3), bot3=sorted.slice(-3).reverse();
   function rH(arr,bg,tc){return arr.map(function(d,i){return'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div style="width:28px;height:28px;background:'+bg+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:'+tc+';flex-shrink:0">'+(i+1)+'</div><div><div style="font-size:14px;font-weight:700">งาน'+d+'</div><div style="font-size:12px;color:var(--g400)">'+overall(xd[d]||{}).toFixed(2)+' / 5.00</div></div></div>';}).join('');}
   document.getElementById('sw-box').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem"><div><div style="font-size:13.5px;font-weight:700;color:var(--green);margin-bottom:12px">🏆 จุดแข็ง — สูง 3 อันดับ</div>'+rH(top3,'var(--green-lt)','var(--green)')+'</div><div><div style="font-size:13.5px;font-weight:700;color:var(--red);margin-bottom:12px">🔧 ควรพัฒนา — ต่ำ 3 อันดับ</div>'+rH(bot3,'var(--red-lt)','var(--red)')+'</div></div>';
 }
